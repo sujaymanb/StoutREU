@@ -9,4 +9,9 @@ private:
 	/// Move arm to given coordinates
 	/// </summary>
 	int MoveArm(float x, float y, float z);
+
+	/// <summary>
+	/// Get the goal position
+	/// </summary>
+	HRESULT GetMouthPosition(IBody* pBody, CameraSpacePoint* mouthPosition);
 };

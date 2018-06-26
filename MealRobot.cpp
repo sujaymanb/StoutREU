@@ -69,6 +69,40 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	application.Run(hInstance, nCmdShow);
 }
 
+
+/// <summary>
+/// Get the goal position
+/// </summary>
+HRESULT MealRobot::GetMouthPosition(IBody* pBody, CameraSpacePoint* mouthPosition)
+{
+	HRESULT hr = E_FAIL;
+
+	if (pBody != nullptr)
+	{
+		BOOLEAN bTracked = false;
+		hr = pBody->get_IsTracked(&bTracked);
+
+		if (SUCCEEDED(hr) && bTracked)
+		{
+			Joint joints[JointType_Count];
+			hr = pBody->GetJoints(_countof(joints), joints);
+			if (SUCCEEDED(hr))
+			{
+				CameraSpacePoint neckJoint = joints[JointType_Neck].Position;
+				
+				// set offsets here if needed
+				// for now just returns neck position
+				mouthPosition->X = neckJoint.X;
+				mouthPosition->Y = neckJoint.Y;
+				mouthPosition->Z = neckJoint.Z;
+			}
+		}
+	}
+
+	return hr;
+}
+
+
 /// <summary>
 /// Move arm to given position
 /// </summary>
@@ -123,12 +157,6 @@ int MealRobot::MoveArm(float x, float y, float z)
 			//Setting the current device as the active device.
 			MySetActiveDevice(list[i]);
 
-			OutputDebugString(L"Send the robot to HOME position\n");
-			MyMoveHome();
-
-			OutputDebugString(L"Initializing the fingers\n");
-			MyInitFingers();
-
 			TrajectoryPoint pointToSend;
 			pointToSend.InitStruct();
 
@@ -147,6 +175,9 @@ int MealRobot::MoveArm(float x, float y, float z)
 			pointToSend.Position.CartesianPosition.ThetaX = currentCommand.Coordinates.ThetaX;
 			pointToSend.Position.CartesianPosition.ThetaY = currentCommand.Coordinates.ThetaY;
 			pointToSend.Position.CartesianPosition.ThetaZ = currentCommand.Coordinates.ThetaZ;
+			pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
+			pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
+			pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
 
 			OutputDebugString(L"Sending the point to the robot.\n");
 			MySendBasicTrajectory(pointToSend);
@@ -161,3 +192,159 @@ int MealRobot::MoveArm(float x, float y, float z)
 
 	return programResult;
 }
+
+/// <summary>
+/// Processes new face frames (Override)
+/// </summary>
+void CFaceBasics::ProcessFaces()
+{
+	HRESULT hr;
+	IBody* ppBodies[BODY_COUNT] = { 0 };
+	CameraSpacePoint* mouthPoints[BODY_COUNT];
+	for (int i = 0; i < BODY_COUNT; ++i)
+	{
+		mouthPoints[i]->X = 999.0;
+		mouthPoints[i]->Y = 999.0;
+		mouthPoints[i]->Z = 999.0;
+	}
+	int iFaceMin = 0;	// current min face index
+	bool bHaveBodyData = SUCCEEDED(UpdateBodyData(ppBodies));
+	int mouthOpenCounter = 0;
+
+	// iterate through each face reader
+	for (int iFace = 0; iFace < BODY_COUNT; ++iFace)
+	{
+		// retrieve the latest face frame from this reader
+		IFaceFrame* pFaceFrame = nullptr;
+		hr = m_pFaceFrameReaders[iFace]->AcquireLatestFrame(&pFaceFrame);
+		float min = 999.0;
+
+		BOOLEAN bFaceTracked = false;
+		if (SUCCEEDED(hr) && nullptr != pFaceFrame)
+		{
+			// check if a valid face is tracked in this face frame
+			hr = pFaceFrame->get_IsTrackingIdValid(&bFaceTracked);
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			if (bFaceTracked)
+			{
+				IFaceFrameResult* pFaceFrameResult = nullptr;
+				RectI faceBox = { 0 };
+				PointF facePoints[FacePointType::FacePointType_Count];
+				Vector4 faceRotation;
+				DetectionResult faceProperties[FaceProperty::FaceProperty_Count];
+				D2D1_POINT_2F faceTextLayout;
+
+				hr = pFaceFrame->get_FaceFrameResult(&pFaceFrameResult);
+
+				// need to verify if pFaceFrameResult contains data before trying to access it
+				if (SUCCEEDED(hr) && pFaceFrameResult != nullptr)
+				{
+					hr = pFaceFrameResult->get_FaceBoundingBoxInColorSpace(&faceBox);
+
+					if (SUCCEEDED(hr))
+					{
+						hr = pFaceFrameResult->GetFacePointsInColorSpace(FacePointType::FacePointType_Count, facePoints);
+					}
+
+					if (SUCCEEDED(hr))
+					{
+						hr = pFaceFrameResult->get_FaceRotationQuaternion(&faceRotation);
+					}
+
+					if (SUCCEEDED(hr))
+					{
+						hr = pFaceFrameResult->GetFaceProperties(FaceProperty::FaceProperty_Count, faceProperties);
+					}
+
+					if (SUCCEEDED(hr))
+					{
+						hr = GetFaceTextPositionInColorSpace(ppBodies[iFace], &faceTextLayout);
+					}
+
+					if (SUCCEEDED(hr))
+					{
+						// draw face frame results
+						m_pDrawDataStreams->DrawFaceFrameResults(iFace, &faceBox, facePoints, &faceRotation, faceProperties, &faceTextLayout);
+
+						// update the distances
+						hr = GetMouthPosition(ppBodies[iFace], &mouthPoints[iFace]);
+
+						for (int i = 0; i < BODY_COUNT; ++i)
+						{
+							if (mouthPoints[i]->Z < min)
+							{
+								iFaceMin = i;
+								min = mouthPoints[i]->Z;
+							}
+						}
+
+						// check if mouth is open
+						if (faceProperties[FaceProperty_MouthOpen] == DetectionResult_Yes && mouthPoints[iFace]->Z <= mouthPoints[iFaceMin]->Z)
+						{
+							mouthOpenCounter++;
+							if (mouthOpenCounter == 30)
+							{
+								// send move command
+								// using dummy coordinates for now
+								int armResult;
+								armResult = MoveArm(0.3248, 0.45, 0.1672);
+								if (armResult == 1)
+								{
+									OutputDebugString(L"Arm Moved Successfully");
+								}
+							}
+						}
+						else
+						{
+							mouthOpenCounter = 0;
+						}
+					}
+				}
+
+				SafeRelease(pFaceFrameResult);
+			}
+			else
+			{
+				// face tracking is not valid - attempt to fix the issue
+				// a valid body is required to perform this step
+				if (bHaveBodyData)
+				{
+					// check if the corresponding body is tracked 
+					// if this is true then update the face frame source to track this body
+					IBody* pBody = ppBodies[iFace];
+					if (pBody != nullptr)
+					{
+						BOOLEAN bTracked = false;
+						hr = pBody->get_IsTracked(&bTracked);
+
+						UINT64 bodyTId;
+						if (SUCCEEDED(hr) && bTracked)
+						{
+							// get the tracking ID of this body
+							hr = pBody->get_TrackingId(&bodyTId);
+							if (SUCCEEDED(hr))
+							{
+								// update the face frame source with the tracking ID
+								m_pFaceFrameSources[iFace]->put_TrackingId(bodyTId);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		SafeRelease(pFaceFrame);
+	}
+
+	if (bHaveBodyData)
+	{
+		for (int i = 0; i < _countof(ppBodies); ++i)
+		{
+			SafeRelease(ppBodies[i]);
+		}
+	}
+}
+
