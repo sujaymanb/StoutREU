@@ -136,7 +136,7 @@ int MealRobot::MoveArm(float x, float y, float z)
 			pointToSend.Position.Type = CARTESIAN_POSITION;
 
 			//We get the actual cartesian command of the robot. (Use this for relative position)
-			//MyGetCartesianCommand(currentCommand);
+			MyGetCartesianCommand(currentCommand);
 
 			//pointToSend.Position.CartesianPosition.X = currentCommand.Coordinates.X - 0.1f;
 			//pointToSend.Position.CartesianPosition.Y = currentCommand.Coordinates.Y - 0.1f;
