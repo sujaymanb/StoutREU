@@ -1,3 +1,4 @@
+/*
 #pragma once
 #include "resource.h"
 #include "ImageRenderer.h"
@@ -19,4 +20,4 @@ public:
 	/// Get the goal position
 	/// </summary>
 	HRESULT GetMouthPosition(IBody* pBody, CameraSpacePoint* mouthPosition);
-};
+};*/

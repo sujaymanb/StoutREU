@@ -53,6 +53,17 @@ public:
     /// <param name="nCmdShow"></param>
     int                    Run(HINSTANCE hInstance, int nCmdShow);
 
+private:
+	/// <summary>
+	/// Move arm to given coordinates
+	/// </summary>
+	int MoveArm(float x, float y, float z);
+
+	/// <summary>
+	/// Get the goal position
+	/// </summary>
+	HRESULT GetMouthPosition(IBody* pBody, CameraSpacePoint* mouthPosition);
+
     /// <summary>
     /// Main processing function
     /// </summary>

@@ -1,3 +1,4 @@
+/*
 // Kinect Includes
 
 #include "stdafx.h"
@@ -354,3 +355,4 @@ void MealRobot::ProcessFaces()
 	}
 }
 
+*/
