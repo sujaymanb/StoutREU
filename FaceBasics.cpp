@@ -53,6 +53,7 @@ static const DWORD c_FaceFrameFeatures =
     | FaceFrameFeatures::FaceFrameFeatures_Glasses
     | FaceFrameFeatures::FaceFrameFeatures_FaceEngagement;
 
+int mouthOpenCounter[BODY_COUNT] = { 0 };
 
 /// <summary>
 /// Entry point for the application
@@ -633,7 +634,7 @@ void CFaceBasics::DrawStreams(INT64 nTime, RGBQUAD* pBuffer, int nWidth, int nHe
 }
 
 /// <summary>
-/// Processes new face frames (Override)
+/// Processes new face frames
 /// </summary>
 void CFaceBasics::ProcessFaces()
 {
@@ -648,7 +649,6 @@ void CFaceBasics::ProcessFaces()
 	}
 	int iFaceMin = 0;	// current min face index
 	bool bHaveBodyData = SUCCEEDED(UpdateBodyData(ppBodies));
-	int mouthOpenCounter = 0;
 
 	// iterate through each face reader
 	for (int iFace = 0; iFace < BODY_COUNT; ++iFace)
@@ -721,7 +721,8 @@ void CFaceBasics::ProcessFaces()
 						}
 
 						std::wstringstream s;
-						s << L"Goal Coords: " << mouthPoints[iFace].X << ", " << mouthPoints[iFace].Y << ", " << mouthPoints[iFace].Z << "\n" << mouthOpenCounter << "\n";
+						s << L"Goal Coords: " << mouthPoints[iFace].X << ", " << mouthPoints[iFace].Y << ", " << mouthPoints[iFace].Z << "\n" 
+							<< mouthOpenCounter[iFace] << " Min: " << mouthPoints[iFaceMin].Z << "\n";
 						std::wstring ws = s.str();
 						LPCWSTR l = ws.c_str();
 						OutputDebugString(l);
@@ -729,11 +730,12 @@ void CFaceBasics::ProcessFaces()
 						// check if mouth is open
 						if (faceProperties[FaceProperty_MouthOpen] == DetectionResult_Yes && mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
 						{
-							mouthOpenCounter++;
-							if (mouthOpenCounter == 0)
+							mouthOpenCounter[iFace]++;
+							if (mouthOpenCounter[iFace] == 30)
 							{
+								OutputDebugString(L"Moving arm");
 								// send move command
-								// using dummy coordinates for now
+								// using dummy coordinates for now					
 								int armResult;
 								armResult = MoveArm(0.3248, 0.45, 0.1672);
 								if (armResult == 1)
@@ -744,7 +746,7 @@ void CFaceBasics::ProcessFaces()
 						}
 						else
 						{
-							mouthOpenCounter = 0;
+							mouthOpenCounter[iFace] = 0;
 						}
 					}
 				}
