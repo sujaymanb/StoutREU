@@ -462,7 +462,7 @@ int CFaceBasics::MoveArm(float x, float y, float z)
 			pointToSend.InitStruct();
 
 			// Move Home
-			MyMoveHome();
+			// MyMoveHome();
 
 			//We specify that this point will be a Cartesian Position.
 			pointToSend.Position.Type = CARTESIAN_POSITION;
