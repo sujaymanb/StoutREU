@@ -9,7 +9,6 @@
 #include "resource.h"
 #include "ImageRenderer.h"
 
-
 class CFaceBasics
 {
     static const int       cColorWidth  = 1920;
