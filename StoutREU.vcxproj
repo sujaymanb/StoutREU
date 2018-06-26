@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="FaceBasics.cpp" />
     <ClCompile Include="ImageRenderer.cpp" />
+    <ClCompile Include="MealRobot.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="app.ico" />
@@ -29,10 +30,18 @@
     <ResourceCompile Include="FaceBasics.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CommandLayer.h" />
+    <ClInclude Include="CommunicationLayerWindows.h" />
     <ClInclude Include="FaceBasics.h" />
     <ClInclude Include="ImageRenderer.h" />
+    <ClInclude Include="KinovaTypes.h" />
+    <ClInclude Include="MealRobot.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CommandLayerWindows.dll" />
+    <None Include="CommunicationLayerWindows.dll" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{AC776ACF-58A4-4BB4-9797-D687E3DC7E68}</ProjectGuid>

@@ -6,7 +6,6 @@
 #include "MealRobot.h"
 
 // Kinova Includes
-#include <Windows.h>
 #include "CommunicationLayerWindows.h"
 #include "CommandLayer.h"
 #include <conio.h>
@@ -65,7 +64,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
-	CFaceBasics application;
+	MealRobot application;
 	application.Run(hInstance, nCmdShow);
 }
 
@@ -196,7 +195,7 @@ int MealRobot::MoveArm(float x, float y, float z)
 /// <summary>
 /// Processes new face frames (Override)
 /// </summary>
-void CFaceBasics::ProcessFaces()
+void MealRobot::ProcessFaces()
 {
 	HRESULT hr;
 	IBody* ppBodies[BODY_COUNT] = { 0 };
@@ -270,7 +269,7 @@ void CFaceBasics::ProcessFaces()
 						m_pDrawDataStreams->DrawFaceFrameResults(iFace, &faceBox, facePoints, &faceRotation, faceProperties, &faceTextLayout);
 
 						// update the distances
-						hr = GetMouthPosition(ppBodies[iFace], &mouthPoints[iFace]);
+						hr = MealRobot::GetMouthPosition(ppBodies[iFace], mouthPoints[iFace]);
 
 						for (int i = 0; i < BODY_COUNT; ++i)
 						{
@@ -280,6 +279,13 @@ void CFaceBasics::ProcessFaces()
 								min = mouthPoints[i]->Z;
 							}
 						}
+
+						std::wstringstream s;
+						s << L"Goal Coords: " << mouthPoints[iFace]->X << ", " << mouthPoints[iFace]->Y << ", " << mouthPoints[iFace]->Z << "\n" << mouthOpenCounter << "\n";
+						std::wstring ws = s.str();
+						LPCWSTR l = ws.c_str();
+						OutputDebugString(l);
+						OutputDebugString(L"WHY");
 
 						// check if mouth is open
 						if (faceProperties[FaceProperty_MouthOpen] == DetectionResult_Yes && mouthPoints[iFace]->Z <= mouthPoints[iFaceMin]->Z)

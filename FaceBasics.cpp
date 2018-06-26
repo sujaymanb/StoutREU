@@ -29,6 +29,7 @@ static const DWORD c_FaceFrameFeatures =
     | FaceFrameFeatures::FaceFrameFeatures_Glasses
     | FaceFrameFeatures::FaceFrameFeatures_FaceEngagement;
 
+/*
 /// <summary>
 /// Entry point for the application
 /// </summary>
@@ -44,7 +45,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     CFaceBasics application;
     application.Run(hInstance, nCmdShow);
-}
+}*/
 
 /// <summary>
 /// Constructor

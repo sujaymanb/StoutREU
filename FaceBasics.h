@@ -53,7 +53,6 @@ public:
     /// <param name="nCmdShow"></param>
     int                    Run(HINSTANCE hInstance, int nCmdShow);
 
-private:
     /// <summary>
     /// Main processing function
     /// </summary>
