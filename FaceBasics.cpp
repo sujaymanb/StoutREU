@@ -54,6 +54,9 @@ static const DWORD c_FaceFrameFeatures =
     | FaceFrameFeatures::FaceFrameFeatures_FaceEngagement;
 
 int mouthOpenCounter[BODY_COUNT] = { 0 };
+float x_offset = -0.4826;
+float y_offset = 0.1397;
+float z_offset = 0.635;
 
 /// <summary>
 /// Entry point for the application
@@ -458,6 +461,9 @@ int CFaceBasics::MoveArm(float x, float y, float z)
 			TrajectoryPoint pointToSend;
 			pointToSend.InitStruct();
 
+			// Move Home
+			MyMoveHome();
+
 			//We specify that this point will be a Cartesian Position.
 			pointToSend.Position.Type = CARTESIAN_POSITION;
 
@@ -737,7 +743,12 @@ void CFaceBasics::ProcessFaces()
 								// send move command
 								// using dummy coordinates for now					
 								int armResult;
-								armResult = MoveArm(0.3248, 0.45, 0.1672);
+								float x = mouthPoints[iFace].X - x_offset;
+								float y = mouthPoints[iFace].Y - y_offset;
+								float z = mouthPoints[iFace].Z - z_offset;
+								//armResult = MoveArm(0.3248, 0.45, 0.1672);
+								// y corresponds to z, 
+								armResult = MoveArm(z, x, y);
 								if (armResult == 1)
 								{
 									OutputDebugString(L"Arm Moved Successfully");
