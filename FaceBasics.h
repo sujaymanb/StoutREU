@@ -55,6 +55,11 @@ public:
 
 private:
 	/// <summary>
+	/// map kinect coords to arm command
+	/// </summary>
+	void KinectToArm(float kx, float ky, float kz, float* x, float* y, float* z);
+
+	/// <summary>
 	/// Move arm to given coordinates
 	/// </summary>
 	int MoveArm(float x, float y, float z);

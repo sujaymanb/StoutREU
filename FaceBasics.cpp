@@ -14,9 +14,12 @@
 #include "CommandLayer.h"
 #include <conio.h>
 #include "KinovaTypes.h"
+
+// other
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <conio.h>
 
 // Kinova API init
 
@@ -57,6 +60,7 @@ int mouthOpenCounter[BODY_COUNT] = { 0 };
 float x_offset = -0.4826;
 float y_offset = 0.1397;
 float z_offset = 0.635;
+float mouth_offset = 0.100;
 
 /// <summary>
 /// Entry point for the application
@@ -394,7 +398,7 @@ HRESULT CFaceBasics::GetMouthPosition(IBody* pBody, CameraSpacePoint* mouthPosit
 				// set offsets here if needed
 				// for now just returns neck position
 				mouthPosition->X = neckJoint.X;
-				mouthPosition->Y = neckJoint.Y;
+				mouthPosition->Y = neckJoint.Y + mouth_offset;
 				mouthPosition->Z = neckJoint.Z;
 			}
 		}
@@ -403,6 +407,20 @@ HRESULT CFaceBasics::GetMouthPosition(IBody* pBody, CameraSpacePoint* mouthPosit
 	return hr;
 }
 
+/// <summary>
+/// Kinect coords to arm coords
+/// </summary>
+void CFaceBasics::KinectToArm(float kx, float ky, float kz, float* x, float* y, float* z)
+{
+	float ax, ay, az;
+	ax = kx - x_offset;
+	ay = ky - y_offset;
+	az = kz - z_offset;
+
+	*x = -az;
+	*y = -ax;
+	*z = ay;
+}
 
 /// <summary>
 /// Move arm to given position
@@ -461,30 +479,46 @@ int CFaceBasics::MoveArm(float x, float y, float z)
 			TrajectoryPoint pointToSend;
 			pointToSend.InitStruct();
 
-			// Move Home
-			// MyMoveHome();
+			// Move home
+			MyMoveHome();
 
 			//We specify that this point will be a Cartesian Position.
 			pointToSend.Position.Type = CARTESIAN_POSITION;
 
-			//We get the actual cartesian command of the robot. (Use this for relative position)
 			MyGetCartesianCommand(currentCommand);
 
-			//pointToSend.Position.CartesianPosition.X = currentCommand.Coordinates.X - 0.1f;
-			//pointToSend.Position.CartesianPosition.Y = currentCommand.Coordinates.Y - 0.1f;
-			//pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z - 0.1f;
-			pointToSend.Position.CartesianPosition.X = x;
-			pointToSend.Position.CartesianPosition.Y = y;
-			pointToSend.Position.CartesianPosition.Z = z;
-			pointToSend.Position.CartesianPosition.ThetaX = currentCommand.Coordinates.ThetaX;
-			pointToSend.Position.CartesianPosition.ThetaY = currentCommand.Coordinates.ThetaY;
-			pointToSend.Position.CartesianPosition.ThetaZ = currentCommand.Coordinates.ThetaZ;
+			float x1, y1, z1;
+			KinectToArm(0, 0, 0.3, &x1, &y1, &z1);
+
+			pointToSend.Position.CartesianPosition.X = x1;
+			pointToSend.Position.CartesianPosition.Y = y1;
+			pointToSend.Position.CartesianPosition.Z = z1;
+			pointToSend.Position.CartesianPosition.ThetaX = 1.6015;
+			pointToSend.Position.CartesianPosition.ThetaY = 0.3294;
+			pointToSend.Position.CartesianPosition.ThetaZ = 0.1760;
 			pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
 			pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
 			pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
 
 			OutputDebugString(L"Sending the point to the robot.\n");
 			MySendBasicTrajectory(pointToSend);
+
+			MyGetCartesianCommand(currentCommand);
+
+			pointToSend.Position.CartesianPosition.X = x;
+			pointToSend.Position.CartesianPosition.Y = y;
+			pointToSend.Position.CartesianPosition.Z = z;
+			pointToSend.Position.CartesianPosition.ThetaX = 1.6015;
+			pointToSend.Position.CartesianPosition.ThetaY = 0.3294;
+			pointToSend.Position.CartesianPosition.ThetaZ = 0.1760;
+			pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
+			pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
+			pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
+
+			OutputDebugString(L"Sending the point to the robot.\n");
+			MySendBasicTrajectory(pointToSend);
+			//Sleep(20000);
+
 		}
 
 		OutputDebugString(L"Closing Arm API\n");
@@ -731,24 +765,24 @@ void CFaceBasics::ProcessFaces()
 							<< mouthOpenCounter[iFace] << " Min: " << mouthPoints[iFaceMin].Z << "\n";
 						std::wstring ws = s.str();
 						LPCWSTR l = ws.c_str();
-						OutputDebugString(l);
+						//OutputDebugString(l);
 
 						// check if mouth is open
 						if (faceProperties[FaceProperty_MouthOpen] == DetectionResult_Yes && mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
 						{
 							mouthOpenCounter[iFace]++;
-							if (mouthOpenCounter[iFace] == 30)
+							if (mouthOpenCounter[iFace] >= 30)
 							{
+								mouthOpenCounter[iFace] = 0;
 								OutputDebugString(L"Moving arm");
 								// send move command
 								// using dummy coordinates for now					
 								int armResult;
-								float x = mouthPoints[iFace].X - x_offset;
-								float y = mouthPoints[iFace].Y - y_offset;
-								float z = mouthPoints[iFace].Z - z_offset;
+								float x, y, z;
+								KinectToArm(mouthPoints[iFace].X, mouthPoints[iFace].Y, mouthPoints[iFace].Z, &x, &y, &z);
 								//armResult = MoveArm(0.3248, 0.45, 0.1672);
-								// y corresponds to z, 
-								armResult = MoveArm(z, x, y);
+								
+								armResult = MoveArm(x, y, z);
 								if (armResult == 1)
 								{
 									OutputDebugString(L"Arm Moved Successfully");
