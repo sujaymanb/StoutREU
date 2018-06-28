@@ -35,6 +35,7 @@ int(*MySetActiveDevice)(KinovaDevice device);
 int(*MyMoveHome)();
 int(*MyInitFingers)();
 int(*MyGetCartesianCommand)(CartesianPosition &);
+int(*MyEraseAllTrajectories)();
 
 // face property text layout offset in X axis
 static const float c_FaceTextLayoutOffsetX = -0.1f;
@@ -113,7 +114,63 @@ CFaceBasics::CFaceBasics() :
     // create heap storage for color pixel data in RGBX format
     m_pColorRGBX = new RGBQUAD[cColorWidth * cColorHeight];
 
+	// init arm
 
+	//We load the API.
+	commandLayer_handle = LoadLibrary(L"CommandLayerWindows.dll");
+	int programResult = 0;
+
+	//We load the functions from the library (Under Windows, use GetProcAddress)
+	MyInitAPI = (int(*)()) GetProcAddress(commandLayer_handle, "InitAPI");
+	MyCloseAPI = (int(*)()) GetProcAddress(commandLayer_handle, "CloseAPI");
+	MyMoveHome = (int(*)()) GetProcAddress(commandLayer_handle, "MoveHome");
+	MyInitFingers = (int(*)()) GetProcAddress(commandLayer_handle, "InitFingers");
+	MyGetDevices = (int(*)(KinovaDevice devices[MAX_KINOVA_DEVICE], int &result)) GetProcAddress(commandLayer_handle, "GetDevices");
+	MySetActiveDevice = (int(*)(KinovaDevice devices)) GetProcAddress(commandLayer_handle, "SetActiveDevice");
+	MySendBasicTrajectory = (int(*)(TrajectoryPoint)) GetProcAddress(commandLayer_handle, "SendBasicTrajectory");
+	MyGetCartesianCommand = (int(*)(CartesianPosition &)) GetProcAddress(commandLayer_handle, "GetCartesianCommand");
+	MyEraseAllTrajectories = (int(*)()) GetProcAddress(commandLayer_handle, "EraseAllTrajectories");
+
+	//Verify that all functions has been loaded correctly
+	if ((MyInitAPI == NULL) || (MyCloseAPI == NULL) || (MySendBasicTrajectory == NULL) ||
+		(MyGetDevices == NULL) || (MySetActiveDevice == NULL) || (MyGetCartesianCommand == NULL) ||
+		(MyMoveHome == NULL) || (MyInitFingers == NULL))
+
+	{
+		OutputDebugString(L"* * *  Error During Arm Initialization  * * *\n");
+		programResult = 0;
+	}
+	else
+	{
+		OutputDebugString(L"Arm Initialization Complete\n\n");
+
+		int result = (*MyInitAPI)();
+
+		OutputDebugString(L"Initialization's result :");
+
+		KinovaDevice list[MAX_KINOVA_DEVICE];
+
+		int devicesCount = MyGetDevices(list, result);
+
+		if (devicesCount < 1)
+		{
+			OutputDebugString(L"Robots not found");
+		}
+		else
+		{
+			std::wstringstream s;
+			s << L"Found a robot on the USB bus (" << list[0].SerialNumber << ")\n";
+			std::wstring ws = s.str();
+			LPCWSTR l = ws.c_str();
+			OutputDebugString(l);
+
+			//Setting the current device as the active device.
+			MySetActiveDevice(list[0]);
+
+			// Move home
+			MyMoveHome();
+		}
+	}
 }
 
 
@@ -161,6 +218,11 @@ CFaceBasics::~CFaceBasics()
     }
 
     SafeRelease(m_pKinectSensor);
+
+	// close arm api
+	OutputDebugString(L"Closing Arm API\n");
+	int result = (*MyCloseAPI)();
+	FreeLibrary(commandLayer_handle);
 }
 
 /// <summary>
@@ -430,90 +492,31 @@ void CFaceBasics::KinectToArm(float kx, float ky, float kz, float* x, float* y, 
 /// </summary>
 int CFaceBasics::MoveArm(float x, float y, float z)
 {
-	//We load the API.
-	commandLayer_handle = LoadLibrary(L"CommandLayerWindows.dll");
-
 	CartesianPosition currentCommand;
+	TrajectoryPoint pointToSend;
+	pointToSend.InitStruct();
 
-	int programResult = 0;
+	//We specify that this point will be a Cartesian Position.
+	pointToSend.Position.Type = CARTESIAN_POSITION;
 
-	//We load the functions from the library (Under Windows, use GetProcAddress)
-	MyInitAPI = (int(*)()) GetProcAddress(commandLayer_handle, "InitAPI");
-	MyCloseAPI = (int(*)()) GetProcAddress(commandLayer_handle, "CloseAPI");
-	MyMoveHome = (int(*)()) GetProcAddress(commandLayer_handle, "MoveHome");
-	MyInitFingers = (int(*)()) GetProcAddress(commandLayer_handle, "InitFingers");
-	MyGetDevices = (int(*)(KinovaDevice devices[MAX_KINOVA_DEVICE], int &result)) GetProcAddress(commandLayer_handle, "GetDevices");
-	MySetActiveDevice = (int(*)(KinovaDevice devices)) GetProcAddress(commandLayer_handle, "SetActiveDevice");
-	MySendBasicTrajectory = (int(*)(TrajectoryPoint)) GetProcAddress(commandLayer_handle, "SendBasicTrajectory");
-	MyGetCartesianCommand = (int(*)(CartesianPosition &)) GetProcAddress(commandLayer_handle, "GetCartesianCommand");
+	MyGetCartesianCommand(currentCommand);
 
-	//Verify that all functions has been loaded correctly
-	if ((MyInitAPI == NULL) || (MyCloseAPI == NULL) || (MySendBasicTrajectory == NULL) ||
-		(MyGetDevices == NULL) || (MySetActiveDevice == NULL) || (MyGetCartesianCommand == NULL) ||
-		(MyMoveHome == NULL) || (MyInitFingers == NULL))
+	pointToSend.Position.CartesianPosition.X = x;
+	pointToSend.Position.CartesianPosition.Y = y;
+	pointToSend.Position.CartesianPosition.Z = z;
+	pointToSend.Position.CartesianPosition.ThetaX = 1.6015;
+	pointToSend.Position.CartesianPosition.ThetaY = 0.3294;
+	pointToSend.Position.CartesianPosition.ThetaZ = 0.1760;
+	pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
+	pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
+	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
 
-	{
-		OutputDebugString(L"* * *  Error During Arm Initialization  * * *\n");
-		programResult = 0;
-	}
-	else
-	{
-		OutputDebugString(L"Arm Initialization Complete\n\n");
-
-		int result = (*MyInitAPI)();
-
-		OutputDebugString(L"Initialization's result :");
-
-		KinovaDevice list[MAX_KINOVA_DEVICE];
-
-		int devicesCount = MyGetDevices(list, result);
-
-		for (int i = 0; i < devicesCount; i++)
-		{
-			std::wstringstream s;
-			s << L"Found a robot on the USB bus (" << list[i].SerialNumber << ")\n";
-			std::wstring ws = s.str();
-			LPCWSTR l = ws.c_str();
-			OutputDebugString(l);
-
-			//Setting the current device as the active device.
-			MySetActiveDevice(list[i]);
-
-			TrajectoryPoint pointToSend;
-			pointToSend.InitStruct();
-
-			// Move home
-			MyMoveHome();
-
-			//We specify that this point will be a Cartesian Position.
-			pointToSend.Position.Type = CARTESIAN_POSITION;
-
-			MyGetCartesianCommand(currentCommand);
-
-			pointToSend.Position.CartesianPosition.X = x;
-			pointToSend.Position.CartesianPosition.Y = y;
-			pointToSend.Position.CartesianPosition.Z = z;
-			pointToSend.Position.CartesianPosition.ThetaX = 1.6015;
-			pointToSend.Position.CartesianPosition.ThetaY = 0.3294;
-			pointToSend.Position.CartesianPosition.ThetaZ = 0.1760;
-			pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
-			pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
-			pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
-
-			OutputDebugString(L"Sending the point to the robot.\n");
-			MySendBasicTrajectory(pointToSend);
-			//Sleep(20000);
-
-		}
-
-		OutputDebugString(L"Closing Arm API\n");
-		result = (*MyCloseAPI)();
-		programResult = 1;
-	}
-
-	FreeLibrary(commandLayer_handle);
-
-	return programResult;
+	OutputDebugString(L"Sending the point to the robot.\n");
+	MySendBasicTrajectory(pointToSend);
+	Sleep(2000);
+	MyEraseAllTrajectories();
+	
+	return 1;
 }
 
 /// <summary>
