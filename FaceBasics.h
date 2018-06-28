@@ -53,13 +53,21 @@ public:
     /// <param name="nCmdShow"></param>
     int                    Run(HINSTANCE hInstance, int nCmdShow);
 
-	bool                    ArmMoving(float newX, float newY, float newZ);
+	/// <summary>
+	/// Check if arm is moving
+	/// </summary>
+	bool                   ArmMoving(float newX, float newY, float newZ, float oldX, float oldY, float oldZ);
 
 private:
 	/// <summary>
 	/// map kinect coords to arm command
 	/// </summary>
 	void KinectToArm(float kx, float ky, float kz, float* x, float* y, float* z);
+
+	/// <summary>
+	/// Wait for arm to stop moving
+	/// </summary>
+	int WaitForArmMove(float goalX, float goalY, float goalZ);
 
 	/// <summary>
 	/// Move arm to given coordinates
@@ -149,6 +157,9 @@ private:
     // Direct2D
     ImageRenderer*         m_pDrawDataStreams;
     ID2D1Factory*          m_pD2DFactory;
-    RGBQUAD*               m_pColorRGBX;	
+    RGBQUAD*               m_pColorRGBX;
+
+	// Arm Moving Flag
+	bool				   armMovingFlag;
 };
 

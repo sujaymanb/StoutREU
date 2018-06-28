@@ -20,6 +20,7 @@
 #include <string>
 #include <sstream>
 #include <conio.h>
+#include <cstdlib>
 
 // Kinova API init
 
@@ -115,6 +116,7 @@ CFaceBasics::CFaceBasics() :
     m_pColorRGBX = new RGBQUAD[cColorWidth * cColorHeight];
 
 	// init arm
+	armMovingFlag = false;
 
 	//We load the API.
 	commandLayer_handle = LoadLibrary(L"CommandLayerWindows.dll");
@@ -440,24 +442,35 @@ HRESULT CFaceBasics::InitializeDefaultSensor()
     return hr;
 }
 
-bool CFaceBasics::ArmMoving(float newX, float newY, float newZ)
+int CFaceBasics::WaitForArmMove(float goalX, float goalY, float goalZ)
 {
-	static float oldX = 0;
-	static float oldY = 0;
-	static float oldZ = 0;
-
-	if ((newX - oldX == 0) && (newY - oldY == 0) && (newZ - oldZ == 0))
+	CartesianPosition current;
+	MyGetCartesianCommand(current);
+	while (ArmMoving(current.Coordinates.X, current.Coordinates.Y, current.Coordinates.Z, goalX, goalY, goalZ))
 	{
-		oldX = 0;
-		oldY = 0;
-		oldZ = 0;
+		OutputDebugString(L"Arm is moving\n");
+		MyGetCartesianCommand(current);
+	}
+	OutputDebugString(L"Arm is stopped\n");
+	return 0;
+}
+
+bool CFaceBasics::ArmMoving(float newX, float newY, float newZ, float goalX, float goalY, float goalZ)
+{
+	// 0.2 is the goal accuracy tolerance
+	if ((abs(newX - goalX) < 0.1) && (abs(newY - goalY) < 0.1) && (abs(newZ - goalZ) < 0.1))
+	{
+		Sleep(1000);
 		return false;
 	}
 	else
 	{
-		oldX = newX;
-		oldY = newY;
-		oldZ = newZ;
+		std::wstringstream s;
+		s << L"Current Coords: " << newX << ", " << newY << ", " << newZ << "\n"
+			<< L"Goal Coords: " << goalX << ", " << goalY << ", " << goalZ << "\n";
+		std::wstring ws = s.str();
+		LPCWSTR l = ws.c_str();
+		OutputDebugString(l);
 		return true;
 	}
 }
@@ -535,7 +548,7 @@ int CFaceBasics::MoveArm(float x, float y, float z)
 
 	OutputDebugString(L"Sending the point to the robot.\n");
 	MySendBasicTrajectory(pointToSend);
-	Sleep(2000);
+	WaitForArmMove(x, y, z);
 	MyEraseAllTrajectories();
 	
 	return 1;
@@ -784,7 +797,7 @@ void CFaceBasics::ProcessFaces()
 							if (mouthOpenCounter[iFace] >= 30)
 							{
 								mouthOpenCounter[iFace] = 0;
-								OutputDebugString(L"Moving arm");
+								OutputDebugString(L"Moving arm\n");
 								// send move command
 								// using dummy coordinates for now					
 								int armResult;
@@ -795,7 +808,7 @@ void CFaceBasics::ProcessFaces()
 								armResult = MoveArm(x, y, z);
 								if (armResult == 1)
 								{
-									OutputDebugString(L"Arm Moved Successfully");
+									OutputDebugString(L"Arm Moved Successfully\n");
 								}
 							}
 						}
@@ -815,7 +828,6 @@ void CFaceBasics::ProcessFaces()
 								float x, y, z;
 								KinectToArm(0, 0, .3, &x, &y, &z);
 								//armResult = MoveArm(0.3248, 0.45, 0.1672);
-
 								MoveArm(x, y, z);
 							}
 						}
