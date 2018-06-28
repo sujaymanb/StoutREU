@@ -161,5 +161,17 @@ private:
 
 	// Arm Moving Flag
 	bool				   armMovingFlag;
+
+	// counters
+	int					   mouthOpenCounter[BODY_COUNT];
+	int					   eyesClosedCounter[BODY_COUNT];
+
+	// offsets
+	float				   x_offset = -0.4826;
+	float				   y_offset = 0.1397;
+	float				   z_offset = 0.635;
+	float				   mouth_offsetX = -0.10;
+	float				   mouth_offsetY = -0.07;
+	float				   mouth_offsetZ = 0.02;
 };
 

@@ -58,13 +58,6 @@ static const DWORD c_FaceFrameFeatures =
     | FaceFrameFeatures::FaceFrameFeatures_Glasses
     | FaceFrameFeatures::FaceFrameFeatures_FaceEngagement;
 
-int mouthOpenCounter[BODY_COUNT] = { 0 };
-int eyesClosedCounter[BODY_COUNT] = { 0 };
-float x_offset = -0.4826;
-float y_offset = 0.1397;
-float z_offset = 0.635;
-float mouth_offset = 0.100;
-
 /// <summary>
 /// Entry point for the application
 /// </summary>
@@ -115,8 +108,10 @@ CFaceBasics::CFaceBasics() :
     // create heap storage for color pixel data in RGBX format
     m_pColorRGBX = new RGBQUAD[cColorWidth * cColorHeight];
 
-	// init arm
+	// init vars
 	armMovingFlag = false;
+	int mouthOpenCounter[BODY_COUNT] = { 0 };
+	int eyesClosedCounter[BODY_COUNT] = { 0 };
 
 	//We load the API.
 	commandLayer_handle = LoadLibrary(L"CommandLayerWindows.dll");
@@ -444,12 +439,17 @@ HRESULT CFaceBasics::InitializeDefaultSensor()
 
 int CFaceBasics::WaitForArmMove(float goalX, float goalY, float goalZ)
 {
+	int timeout = 0;
 	CartesianPosition current;
 	MyGetCartesianCommand(current);
 	while (ArmMoving(current.Coordinates.X, current.Coordinates.Y, current.Coordinates.Z, goalX, goalY, goalZ))
 	{
+		if (timeout >= 10)
+			break;
 		OutputDebugString(L"Arm is moving\n");
 		MyGetCartesianCommand(current);
+		Sleep(1000);
+		timeout++;
 	}
 	OutputDebugString(L"Arm is stopped\n");
 	return 0;
@@ -493,13 +493,13 @@ HRESULT CFaceBasics::GetMouthPosition(IBody* pBody, CameraSpacePoint* mouthPosit
 			hr = pBody->GetJoints(_countof(joints), joints);
 			if (SUCCEEDED(hr))
 			{
-				CameraSpacePoint neckJoint = joints[JointType_Neck].Position;
+				CameraSpacePoint headJoint = joints[JointType_Head].Position;
 
 				// set offsets here if needed
-				// for now just returns neck position
-				mouthPosition->X = neckJoint.X;
-				mouthPosition->Y = neckJoint.Y + mouth_offset;
-				mouthPosition->Z = neckJoint.Z;
+				// for now just returns head position
+				mouthPosition->X = headJoint.X + mouth_offsetX;
+				mouthPosition->Y = headJoint.Y + mouth_offsetY;
+				mouthPosition->Z = headJoint.Z + mouth_offsetZ;
 			}
 		}
 	}
@@ -826,7 +826,7 @@ void CFaceBasics::ProcessFaces()
 								eyesClosedCounter[iFace] = 0;
 
 								float x, y, z;
-								KinectToArm(0, 0, .3, &x, &y, &z);
+								KinectToArm(-0.05, .3, .3, &x, &y, &z);
 								//armResult = MoveArm(0.3248, 0.45, 0.1672);
 								MoveArm(x, y, z);
 							}
