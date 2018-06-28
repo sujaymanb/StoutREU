@@ -53,6 +53,8 @@ public:
     /// <param name="nCmdShow"></param>
     int                    Run(HINSTANCE hInstance, int nCmdShow);
 
+	bool                    ArmMoving(float newX, float newY, float newZ);
+
 private:
 	/// <summary>
 	/// map kinect coords to arm command

@@ -440,6 +440,28 @@ HRESULT CFaceBasics::InitializeDefaultSensor()
     return hr;
 }
 
+bool CFaceBasics::ArmMoving(float newX, float newY, float newZ)
+{
+	static float oldX = 0;
+	static float oldY = 0;
+	static float oldZ = 0;
+
+	if ((newX - oldX == 0) && (newY - oldY == 0) && (newZ - oldZ == 0))
+	{
+		oldX = 0;
+		oldY = 0;
+		oldZ = 0;
+		return false;
+	}
+	else
+	{
+		oldX = newX;
+		oldY = newY;
+		oldZ = newZ;
+		return true;
+	}
+}
+
 /// <summary>
 /// Get the goal position
 /// </summary>
