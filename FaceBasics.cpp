@@ -57,6 +57,7 @@ static const DWORD c_FaceFrameFeatures =
     | FaceFrameFeatures::FaceFrameFeatures_FaceEngagement;
 
 int mouthOpenCounter[BODY_COUNT] = { 0 };
+int eyesClosedCounter[BODY_COUNT] = { 0 };
 float x_offset = -0.4826;
 float y_offset = 0.1397;
 float z_offset = 0.635;
@@ -111,6 +112,8 @@ CFaceBasics::CFaceBasics() :
 
     // create heap storage for color pixel data in RGBX format
     m_pColorRGBX = new RGBQUAD[cColorWidth * cColorHeight];
+
+
 }
 
 
@@ -487,24 +490,6 @@ int CFaceBasics::MoveArm(float x, float y, float z)
 
 			MyGetCartesianCommand(currentCommand);
 
-			float x1, y1, z1;
-			KinectToArm(0, 0, 0.3, &x1, &y1, &z1);
-
-			pointToSend.Position.CartesianPosition.X = x1;
-			pointToSend.Position.CartesianPosition.Y = y1;
-			pointToSend.Position.CartesianPosition.Z = z1;
-			pointToSend.Position.CartesianPosition.ThetaX = 1.6015;
-			pointToSend.Position.CartesianPosition.ThetaY = 0.3294;
-			pointToSend.Position.CartesianPosition.ThetaZ = 0.1760;
-			pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
-			pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
-			pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
-
-			OutputDebugString(L"Sending the point to the robot.\n");
-			MySendBasicTrajectory(pointToSend);
-
-			MyGetCartesianCommand(currentCommand);
-
 			pointToSend.Position.CartesianPosition.X = x;
 			pointToSend.Position.CartesianPosition.Y = y;
 			pointToSend.Position.CartesianPosition.Z = z;
@@ -792,6 +777,26 @@ void CFaceBasics::ProcessFaces()
 						else
 						{
 							mouthOpenCounter[iFace] = 0;
+						}
+
+						if (faceProperties[FaceProperty_LeftEyeClosed] == DetectionResult_Yes && faceProperties[FaceProperty_RightEyeClosed] == DetectionResult_Yes && mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
+						{
+							eyesClosedCounter[iFace]++;
+							if (eyesClosedCounter[iFace] >= 30)
+							{
+								// Make this an enum
+								eyesClosedCounter[iFace] = 0;
+
+								float x, y, z;
+								KinectToArm(0, 0, .3, &x, &y, &z);
+								//armResult = MoveArm(0.3248, 0.45, 0.1672);
+
+								MoveArm(x, y, z);
+							}
+						}
+						else
+						{
+							eyesClosedCounter[iFace] = 0;
 						}
 					}
 				}
