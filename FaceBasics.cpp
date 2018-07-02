@@ -31,6 +31,7 @@ HINSTANCE commandLayer_handle;
 int(*MyInitAPI)();
 int(*MyCloseAPI)();
 int(*MySendBasicTrajectory)(TrajectoryPoint command);
+int(*MySendAdvanceTrajectory)(TrajectoryPoint command);
 int(*MyGetDevices)(KinovaDevice devices[MAX_KINOVA_DEVICE], int &result);
 int(*MySetActiveDevice)(KinovaDevice device);
 int(*MyMoveHome)();
@@ -125,6 +126,7 @@ CFaceBasics::CFaceBasics() :
 	MyGetDevices = (int(*)(KinovaDevice devices[MAX_KINOVA_DEVICE], int &result)) GetProcAddress(commandLayer_handle, "GetDevices");
 	MySetActiveDevice = (int(*)(KinovaDevice devices)) GetProcAddress(commandLayer_handle, "SetActiveDevice");
 	MySendBasicTrajectory = (int(*)(TrajectoryPoint)) GetProcAddress(commandLayer_handle, "SendBasicTrajectory");
+	MySendAdvanceTrajectory = (int(*)(TrajectoryPoint)) GetProcAddress(commandLayer_handle, "SendAdvanceTrajectory");
 	MyGetCartesianCommand = (int(*)(CartesianPosition &)) GetProcAddress(commandLayer_handle, "GetCartesianCommand");
 	MyEraseAllTrajectories = (int(*)()) GetProcAddress(commandLayer_handle, "EraseAllTrajectories");
 
@@ -527,12 +529,14 @@ void CFaceBasics::KinectToArm(float kx, float ky, float kz, float* x, float* y, 
 /// </summary>
 int CFaceBasics::MoveArm(float x, float y, float z)
 {
+	MyEraseAllTrajectories();
 	CartesianPosition currentCommand;
 	TrajectoryPoint pointToSend;
 	pointToSend.InitStruct();
 
 	//We specify that this point will be a Cartesian Position.
 	pointToSend.Position.Type = CARTESIAN_POSITION;
+	pointToSend.LimitationsActive = 0;
 
 	MyGetCartesianCommand(currentCommand);
 
@@ -547,8 +551,13 @@ int CFaceBasics::MoveArm(float x, float y, float z)
 	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
 
 	OutputDebugString(L"Sending the point to the robot.\n");
-	MySendBasicTrajectory(pointToSend);
-	WaitForArmMove(x, y, z);
+	int result = MySendAdvanceTrajectory(pointToSend);
+	if (result != NO_ERROR_KINOVA)
+	{
+		OutputDebugString(L"Could not send advanced trajectory");
+	}
+	//WaitForArmMove(x, y, z);
+	OutputDebugString(L"erase\n");
 	MyEraseAllTrajectories();
 	
 	return 1;
