@@ -599,7 +599,7 @@ int CFaceBasics::Scoop()
 	pointToSend.Position.CartesianPosition.X = currentCommand.Coordinates.X;
 	pointToSend.Position.CartesianPosition.Y = currentCommand.Coordinates.Y;
 	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z - 0.05f;
-	pointToSend.Position.CartesianPosition.ThetaX = 2.4458;
+	pointToSend.Position.CartesianPosition.ThetaX = 2.4858;
 	pointToSend.Position.CartesianPosition.ThetaY = 0.3713;
 	pointToSend.Position.CartesianPosition.ThetaZ = -1.5505;
 	pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
@@ -912,7 +912,7 @@ void CFaceBasics::ProcessFaces()
 
 								float x, y, z;
 								// go to plate, position hard coded for now
-								KinectToArm(-0.25, .1, 0.1, &x, &y, &z);
+								KinectToArm(-0.370, .1, 0, &x, &y, &z);
 								MoveArm(x, y, z);
 
 								// pick up food
