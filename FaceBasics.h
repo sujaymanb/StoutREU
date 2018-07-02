@@ -75,6 +75,11 @@ private:
 	int MoveArm(float x, float y, float z);
 
 	/// <summary>
+	/// Pick up food
+	/// </summary>
+	int Scoop();
+
+	/// <summary>
 	/// Get the goal position
 	/// </summary>
 	HRESULT GetMouthPosition(IBody* pBody, CameraSpacePoint* mouthPosition);

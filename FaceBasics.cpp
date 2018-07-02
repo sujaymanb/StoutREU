@@ -540,9 +540,12 @@ int CFaceBasics::MoveArm(float x, float y, float z)
 
 	MyGetCartesianCommand(currentCommand);
 
-	pointToSend.Position.CartesianPosition.X = x;
-	pointToSend.Position.CartesianPosition.Y = y;
-	pointToSend.Position.CartesianPosition.Z = z;
+	float neutral_x, neutral_y, neutral_z;
+	KinectToArm(0.0, .15, 0.1, &neutral_x, &neutral_y, &neutral_z);
+
+	pointToSend.Position.CartesianPosition.X = neutral_x;
+	pointToSend.Position.CartesianPosition.Y = neutral_y;
+	pointToSend.Position.CartesianPosition.Z = neutral_z;
 	pointToSend.Position.CartesianPosition.ThetaX = 1.6015;
 	pointToSend.Position.CartesianPosition.ThetaY = 0.3294;
 	pointToSend.Position.CartesianPosition.ThetaZ = 0.1760;
@@ -550,16 +553,78 @@ int CFaceBasics::MoveArm(float x, float y, float z)
 	pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
 	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
 
-	OutputDebugString(L"Sending the point to the robot.\n");
+	OutputDebugString(L"Sending to neutral.\n");
 	int result = MySendAdvanceTrajectory(pointToSend);
 	if (result != NO_ERROR_KINOVA)
 	{
 		OutputDebugString(L"Could not send advanced trajectory");
 	}
-	//WaitForArmMove(x, y, z);
+	pointToSend.Position.CartesianPosition.X = x;
+	pointToSend.Position.CartesianPosition.Y = y;
+	pointToSend.Position.CartesianPosition.Z = z;
+
+	OutputDebugString(L"Sending the point to the robot.\n");
+	result = MySendAdvanceTrajectory(pointToSend);
+	if (result != NO_ERROR_KINOVA)
+	{
+		OutputDebugString(L"Could not send advanced trajectory");
+	}
+
+	WaitForArmMove(x, y, z);
 	OutputDebugString(L"erase\n");
 	MyEraseAllTrajectories();
 	
+	return 1;
+}
+
+
+/// <summary>
+/// Scoop up food
+/// </summary>
+
+int CFaceBasics::Scoop()
+{
+	MyEraseAllTrajectories();
+	CartesianPosition currentCommand;
+	TrajectoryPoint pointToSend;
+	pointToSend.InitStruct();
+
+	//We specify that this point will be a Cartesian Position.
+	pointToSend.Position.Type = CARTESIAN_POSITION;
+	pointToSend.LimitationsActive = 0;
+
+	MyGetCartesianCommand(currentCommand);
+
+	// dip down and back up for now
+	pointToSend.Position.CartesianPosition.X = currentCommand.Coordinates.X;
+	pointToSend.Position.CartesianPosition.Y = currentCommand.Coordinates.Y;
+	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z - 0.05f;
+	pointToSend.Position.CartesianPosition.ThetaX = 1.6015;
+	pointToSend.Position.CartesianPosition.ThetaY = 0.3294;
+	pointToSend.Position.CartesianPosition.ThetaZ = 0.1760;
+	pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
+	pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
+	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
+
+	OutputDebugString(L"Dip down.\n");
+	int result = MySendAdvanceTrajectory(pointToSend);
+	if (result != NO_ERROR_KINOVA)
+	{
+		OutputDebugString(L"Could not send advanced trajectory");
+	}
+
+	OutputDebugString(L"Back up.\n");
+	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z;
+	result = MySendAdvanceTrajectory(pointToSend);
+	if (result != NO_ERROR_KINOVA)
+	{
+		OutputDebugString(L"Could not send advanced trajectory");
+	}
+
+	Sleep(1000);
+	OutputDebugString(L"erase\n");
+	MyEraseAllTrajectories();
+
 	return 1;
 }
 
@@ -835,9 +900,14 @@ void CFaceBasics::ProcessFaces()
 								eyesClosedCounter[iFace] = 0;
 
 								float x, y, z;
-								KinectToArm(-0.05, .3, .3, &x, &y, &z);
-								//armResult = MoveArm(0.3248, 0.45, 0.1672);
+								// go to plate, position hard coded for now
+								KinectToArm(-0.2, .1, 0.1, &x, &y, &z);
 								MoveArm(x, y, z);
+
+								// pick up food
+								Scoop();
+								
+
 							}
 						}
 						else
