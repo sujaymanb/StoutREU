@@ -22,12 +22,13 @@
     <ClCompile Include="FaceBasics.cpp" />
     <ClCompile Include="ImageRenderer.cpp" />
     <ClCompile Include="MealRobot.cpp" />
+    <ClCompile Include="Source2.cpp" />
+    <ClCompile Include="SpeechBasics-D2D\KinectAudioStream.cpp" />
+    <ClCompile Include="SpeechBasics-D2D\SpeechBasics.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="app.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="FaceBasics.rc" />
+    <Image Include="SpeechBasics-D2D\app.ico" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CommandLayer.h" />
@@ -37,11 +38,18 @@
     <ClInclude Include="KinovaTypes.h" />
     <ClInclude Include="MealRobot.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="SpeechBasics-D2D\KinectAudioStream.h" />
+    <ClInclude Include="SpeechBasics-D2D\resource1.h" />
+    <ClInclude Include="SpeechBasics-D2D\SpeechBasics.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="CommandLayerWindows.dll" />
     <None Include="CommunicationLayerWindows.dll" />
+    <None Include="SpeechBasics-D2D\SpeechBasics-D2D.grxml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="FaceBasics.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{AC776ACF-58A4-4BB4-9797-D687E3DC7E68}</ProjectGuid>
@@ -102,6 +110,7 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(KINECTSDK20_DIR)\inc;$(IncludePath)</IncludePath>
     <LibraryPath>$(KINECTSDK20_DIR)\lib\x86;$(LibraryPath)</LibraryPath>
+    <EmbedManifest>true</EmbedManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -137,13 +146,16 @@ xcopy "$(KINECTSDK20_DIR)Redist\Face\x64\Kinect20.Face.dll" "$(TargetDir)" /c /y
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProgramFiles)\Microsoft SDKs\Speech\v11.0\Include;$(KINECTSDK20_DIR)\inc;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EntryPointSymbol>
       </EntryPointSymbol>
-      <AdditionalDependencies>Dwrite.lib;kinect20.lib;Kinect20.Face.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Dwrite.lib;kinect20.lib;Kinect20.Face.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;sapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <TypeLibraryResourceID>56</TypeLibraryResourceID>
+      <AdditionalLibraryDirectories>$(ProgramFiles)\Microsoft SDKs\Speech\v11.0\Lib;$(KINECTSDK20_DIR)\lib\x86;$(LibraryPath)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(KINECTSDK20_DIR)Redist\Face\x86\NuiDatabase" "$(TargetDir)NuiDatabase" /e /y /i /r
