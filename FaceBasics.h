@@ -141,9 +141,6 @@ private:
     ULONGLONG              m_nNextStatusTime;
     DWORD                  m_nFramesSinceUpdate;
 
-    // Current Kinect
-    IKinectSensor*         m_pKinectSensor;
-
     // Coordinate mapper
     ICoordinateMapper*     m_pCoordinateMapper;
 

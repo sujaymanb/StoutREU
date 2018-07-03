@@ -23,7 +23,6 @@ Action ActionsForJaco = ActionNone;
 /// </summary>
 CSpeechBasics::CSpeechBasics() :
     m_pD2DFactory(NULL),
-    m_pKinectSensor(NULL),
     m_pAudioBeam(NULL),
     m_pAudioStream(NULL),
     m_p16BitAudioStream(NULL),
@@ -88,22 +87,21 @@ int CSpeechBasics::Run(HINSTANCE hInstance, int nCmdShow)
     {
         return 0;
     }
-
-    // Create main application window
-    HWND hWndApp = CreateDialogParamW(
-        hInstance,
-        MAKEINTRESOURCE(IDD_APP),
-        NULL,
-        (DLGPROC)CSpeechBasics::MessageRouter, 
-        reinterpret_cast<LPARAM>(this));
-	
+	// Create main application window
+	/*
+	HWND hWndApp = CreateDialogParamW(
+		hInstance,
+		MAKEINTRESOURCE(IDD_APP),
+		NULL,
+		(DLGPROC)CSpeechBasics::MessageRouter,
+		reinterpret_cast<LPARAM>(this));
+		*/
     // Show window
     //ShowWindow(hWndApp, nCmdShow);
-
+	StartKinect();
     // Main message loop
     while (WM_QUIT != msg.message)
     {
-		
         if (m_hSpeechEvent != INVALID_HANDLE_VALUE)
         {
             hEvents[1] = m_hSpeechEvent;
@@ -172,11 +170,6 @@ int CSpeechBasics::Run(HINSTANCE hInstance, int nCmdShow)
 
         while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
         {
-            // If a dialog message will be taken care of by the dialog proc
-            if ((hWndApp != NULL) && IsDialogMessageW(hWndApp, &msg))
-			{
-               continue;
-            }
 
             TranslateMessage(&msg);
             DispatchMessageW(&msg);
@@ -186,124 +179,7 @@ int CSpeechBasics::Run(HINSTANCE hInstance, int nCmdShow)
     return static_cast<int>(msg.wParam);
 }
 
-/// <summary>
-/// Handles window messages, passes most to the class instance to handle
-/// </summary>
-/// <param name="hWnd">window message is for</param>
-/// <param name="uMsg">message</param>
-/// <param name="wParam">message data</param>
-/// <param name="lParam">additional message data</param>
-/// <returns>result of message processing</returns>
-LRESULT CALLBACK CSpeechBasics::MessageRouter(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    CSpeechBasics* pThis = NULL;
 
-    if (WM_INITDIALOG == uMsg)
-    {
-        pThis = reinterpret_cast<CSpeechBasics*>(lParam);
-        SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
-    }
-    else
-    {
-        pThis = reinterpret_cast<CSpeechBasics*>(::GetWindowLongPtr(hWnd, GWLP_USERDATA));
-    }
-
-    if (NULL != pThis)
-    {
-        return pThis->DlgProc(hWnd, uMsg, wParam, lParam);
-    }
-
-    return 0;
-}
-
-/// <summary>
-/// Handle windows messages for the class instance
-/// </summary>
-/// <param name="hWnd">window message is for</param>
-/// <param name="uMsg">message</param>
-/// <param name="wParam">message data</param>
-/// <param name="lParam">additional message data</param>
-/// <returns>result of message processing</returns>
-LRESULT CALLBACK CSpeechBasics::DlgProc(HWND hWnd, UINT message, WPARAM /* wParam */, LPARAM /* lParam */)
-{
-    LRESULT result = FALSE;
-
-    switch (message)
-    {
-    case WM_INITDIALOG:
-        {
-            // Bind application window handle
-            m_hWnd = hWnd;
-
-            // Init Direct2D
-            D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pD2DFactory);
-
-            // Create and initialize a new Direct2D image renderer
-            // We'll use this to draw the data we receive from the Kinect to the screen
-           /* m_pTurtleController = new TurtleController();
-            HRESULT hr = m_pTurtleController->Initialize(GetDlgItem(m_hWnd, IDC_AUDIOVIEW), m_pD2DFactory);
-            if (FAILED(hr))
-            {
-                SetStatusMessage(L"Failed to initialize the Direct2D draw device.");
-                break;
-            }*/
-
-            // Look for a connected Kinect, and create it if found
-			int hr;
-            hr = StartKinect();
-            if (FAILED(hr))
-            {
-                break;
-            }
-
-            SetStatusMessage(L"Waiting for Sensor and Speech Initialization - Please ensure Sensor is attached.");
-            result = FALSE;
-            break;
-        }
-
-    case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            BeginPaint(hWnd, &ps);
-
-           // m_pTurtleController->Draw();
-
-            EndPaint(hWnd, &ps);
-            result = TRUE;
-            break;
-        }
-
-        // If the titlebar X is clicked, destroy app
-    case WM_CLOSE:
-        if (NULL != m_p16BitAudioStream)
-        {
-            m_p16BitAudioStream->SetSpeechState(false);
-        }
-
-        if (NULL != m_pSpeechRecognizer)
-        {
-            m_pSpeechRecognizer->SetRecoState(SPRST_INACTIVE_WITH_PURGE);
-
-            //cleanup here
-            SafeRelease(m_pSpeechStream);
-            SafeRelease(m_pSpeechRecognizer);
-            SafeRelease(m_pSpeechContext);
-            SafeRelease(m_pSpeechGrammar);
-        }
-
-        DestroyWindow(hWnd);
-        result = TRUE;
-        break;
-
-    case WM_DESTROY:
-        // Quit the main message pump
-        PostQuitMessage(0);
-        result = TRUE;
-        break;
-    }
-
-    return result;
-}
 
 /// <summary>
 /// Open the KinectSensor and its Audio Stream
@@ -315,13 +191,6 @@ HRESULT CSpeechBasics::StartKinect()
     IAudioSource* pAudioSource = NULL;
     IAudioBeamList* pAudioBeamList = NULL;
     BOOLEAN sensorState = TRUE;
-
-    hr = GetDefaultKinectSensor(&m_pKinectSensor);
-    if (FAILED(hr))
-    {
-        SetStatusMessage(L"Failed getting default sensor!");
-        return hr;
-    }
 
     hr = m_pKinectSensor->SubscribeIsAvailableChanged(&m_hSensorNotification);
 

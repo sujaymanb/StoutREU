@@ -33,6 +33,9 @@ enum Action
 
 extern Action ActionsForJaco;
 
+// Current Kinect sensor
+extern IKinectSensor*  m_pKinectSensor;
+
 /// <summary>
 /// Main application class for SpeechBasics sample.
 /// </summary>
@@ -86,8 +89,6 @@ private:
     ID2D1Factory*           m_pD2DFactory;
 
 
-    // Current Kinect sensor
-    IKinectSensor*          m_pKinectSensor;
 
     // A single audio beam off the Kinect sensor.
     IAudioBeam*             m_pAudioBeam;

@@ -71,7 +71,6 @@ CFaceBasics::CFaceBasics() :
     m_nFramesSinceUpdate(0),
     m_fFreq(0),
     m_nNextStatusTime(0),
-    m_pKinectSensor(nullptr),
     m_pCoordinateMapper(nullptr),
     m_pColorFrameReader(nullptr),
     m_pD2DFactory(nullptr),
@@ -352,14 +351,7 @@ LRESULT CALLBACK CFaceBasics::DlgProc(HWND hWnd, UINT message, WPARAM wParam, LP
 /// <returns>S_OK on success else the failure code</returns>
 HRESULT CFaceBasics::InitializeDefaultSensor()
 {
-    HRESULT hr;
-
-    hr = GetDefaultKinectSensor(&m_pKinectSensor);
-    if (FAILED(hr))
-    {
-        return hr;
-    }
-
+	HRESULT hr;
     if (m_pKinectSensor)
     {
         // Initialize Kinect and get color, body and face readers

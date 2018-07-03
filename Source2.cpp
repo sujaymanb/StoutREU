@@ -19,7 +19,7 @@ DEFINE_GUID(CLSID_ExpectedRecognizer, 0x495648e7, 0xf7ab, 0x4267, 0x8e, 0x0f, 0x
 
 
 using namespace std;
-
+IKinectSensor*  m_pKinectSensor;
 
 void FaceBasicsThread(HINSTANCE hInstance, int nCmdShow)
 {
@@ -74,11 +74,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 	
+	HRESULT hr;
+	hr = GetDefaultKinectSensor(&m_pKinectSensor);
+	if (FAILED(hr))
+	{
+		OutputDebugString(L"Failed getting default sensor!");
+		return hr;
+	}
+
+	
+
+
 	thread th1(SpeechRecognizerThread, hInstance, nCmdShow);
 	thread th2(FaceBasicsThread, hInstance, nCmdShow);
 
 	th1.join();
-	
 	th2.join();
 
 	return 0;
