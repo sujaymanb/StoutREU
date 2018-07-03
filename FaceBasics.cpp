@@ -130,7 +130,7 @@ CFaceBasics::CFaceBasics() :
 
 		int result = (*MyInitAPI)();
 
-		OutputDebugString(L"Initialization's result :");
+		OutputDebugString(L"Initialization's result : \n");
 
 		KinovaDevice list[MAX_KINOVA_DEVICE];
 
@@ -138,7 +138,7 @@ CFaceBasics::CFaceBasics() :
 
 		if (devicesCount < 1)
 		{
-			OutputDebugString(L"Robots not found");
+			OutputDebugString(L"Robots not found \n");
 		}
 		else
 		{
@@ -152,7 +152,7 @@ CFaceBasics::CFaceBasics() :
 			MySetActiveDevice(list[0]);
 
 			// Move home
-			MyMoveHome();
+			//MyMoveHome();
 		}
 	}
 }

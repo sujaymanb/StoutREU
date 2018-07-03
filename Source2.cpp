@@ -73,10 +73,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
-	thread th1(FaceBasicsThread, hInstance, nCmdShow);
-	thread th2(SpeechRecognizerThread, hInstance, nCmdShow);
+	
+	thread th1(SpeechRecognizerThread, hInstance, nCmdShow);
+	thread th2(FaceBasicsThread, hInstance, nCmdShow);
 
 	th1.join();
+	
 	th2.join();
 
 	return 0;
