@@ -11,3 +11,5 @@ Visual Studio Project source for 2018 robotics REU at UW-Stout
 * run device manager
 * install driver for the arm device from the location of SDK
 * TODO: kinect SDK
+
+* Download Microsoft Speech SDK
