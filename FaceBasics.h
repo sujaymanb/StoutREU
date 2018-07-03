@@ -8,7 +8,7 @@
 
 #include "resource.h"
 #include "ImageRenderer.h"
-
+#include "stdafx.h"
 
 class CFaceBasics
 {

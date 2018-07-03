@@ -11,6 +11,7 @@
 #include <d2d1.h>
 #include <Dwrite.h>
 #include <DirectXMath.h>
+#include "stdafx.h"
 
 class ImageRenderer
 {
