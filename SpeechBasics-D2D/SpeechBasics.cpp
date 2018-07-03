@@ -7,7 +7,7 @@
 #include "../stdafx.h"
 #include "SpeechBasics.h"
 #include "../resource.h"
-
+Action ActionsForJaco = ActionNone;
 //#include <guiddef.h>
 
 // Static initializers
@@ -546,8 +546,12 @@ void CSpeechBasics::ProcessSpeech()
                         const SPPHRASEPROPERTY* pSemanticTag = pPhrase->pProperties->pFirstChild;
                         if (pSemanticTag->SREngineConfidence > ConfidenceThreshold)
                         {
-                            Action action = MapSpeechTagToAction(pSemanticTag->pszValue);
-                            DoAction(action);
+                            Action tempAction = MapSpeechTagToAction(pSemanticTag->pszValue);
+							if (tempAction != ActionNone)
+							{
+								ActionsForJaco = tempAction;
+							}
+                            DoAction(tempAction);
                         }
                     }
                     ::CoTaskMemFree(pPhrase);
@@ -577,12 +581,12 @@ Action CSpeechBasics::MapSpeechTagToAction(LPCWSTR pszSpeechTag)
     };
     const SpeechTagToAction Map[] =
     {
-        {L"STRAIGHT", ActionForward},
-        {L"BACKWARD", ActionBackward},
-        {L"LEFT", ActionTurnLeft},
-        {L"RIGHT", ActionTurnRight}
+        {L"DRINK", ActionDrink},
+        {L"FOOD", ActionFood},
+        {L"BOWL", ActionBowl}
     };
 
+	
     Action action = ActionNone;
 
     for (int i = 0; i < _countof(Map); ++i)
@@ -615,20 +619,16 @@ void CSpeechBasics::DoAction(Action action)
 
 	switch (action)
 	{
-	case ActionForward:
-		OutputDebugString(L"Forward\n");
+	case ActionDrink:
+		OutputDebugString(L"Drink\n");
 		break;
 
-	case ActionBackward:
-		OutputDebugString(L"Back\n");
+	case ActionFood:
+		OutputDebugString(L"Food\n");
 		break;
 
-	case ActionTurnRight:
-		OutputDebugString(L"Turn left \n");
-		break;
-
-	case ActionTurnLeft:
-		OutputDebugString(L"Turn Right \n");
+	case ActionBowl:
+		OutputDebugString(L"Bowl\n");
 		break;
 	}
 

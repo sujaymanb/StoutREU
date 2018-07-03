@@ -21,14 +21,17 @@ __pragma(warning(disable:6385 6001)) // Suppress warnings in public SDK header
 #include <sphelper.h>
 __pragma(warning(pop))
 
+
+
 enum Action
 {
-	ActionForward,
-	ActionBackward,
-	ActionTurnRight,
-	ActionTurnLeft,
+	ActionDrink,
+	ActionFood,
+	ActionBowl,
 	ActionNone
 };
+
+extern Action ActionsForJaco;
 
 /// <summary>
 /// Main application class for SpeechBasics sample.

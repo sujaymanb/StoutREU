@@ -2,33 +2,26 @@
   <rule id="rootRule">
     <one-of>
       <item>
-        <tag>STRAIGHT</tag>
+        <tag>DRINK</tag>
         <one-of>
-          <item> forwards </item>
-          <item> forward </item>
-          <item> straight </item>
-	  <item> up </item>
-	  <item> ups </item>
+          <item> drink </item>
+          <item> drinks </item>
+          <item> water </item>
         </one-of>
       </item>
       <item>
-        <tag>BACKWARD</tag>
+        <tag>FOOD</tag>
         <one-of>
-          <item> backward </item>
-          <item> backwards </item>
-          <item> back </item>
+          <item> food </item>
+          <item> foods </item>
         </one-of>
       </item>
       <item>
-        <tag>LEFT</tag>
+        <tag>BOWL</tag>
         <one-of>
-          <item> turn left </item>
-        </one-of>
-      </item>
-      <item>
-        <tag>RIGHT</tag>
-        <one-of>
-          <item> turn right </item>
+          <item> bowl </item>
+	  <item> bowls </item>
+	  <item> back </item>
         </one-of>
       </item>
     </one-of>

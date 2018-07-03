@@ -74,11 +74,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 	thread th1(FaceBasicsThread, hInstance, nCmdShow);
-	//thread th2(foo);
-	
-   // CSpeechBasics application1;
-	//thread th2(application1, hInstance, nCmdShow);
 	thread th2(SpeechRecognizerThread, hInstance, nCmdShow);
+
 	th1.join();
 	th2.join();
 

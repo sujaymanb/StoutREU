@@ -8,6 +8,7 @@
 #include <strsafe.h>
 #include "resource.h"
 #include "FaceBasics.h"
+#include "SpeechBasics-D2D/SpeechBasics.h"
 
 // Kinova Includes
 #include "CommunicationLayerWindows.h"
@@ -852,6 +853,22 @@ void CFaceBasics::ProcessFaces()
 							}
 						}
 
+						switch (ActionsForJaco)
+						{
+						case ActionDrink:
+							OutputDebugString(L"Drink\n");
+							break;
+
+						case ActionFood:
+							OutputDebugString(L"Food\n");
+							break;
+
+						case ActionBowl:
+							OutputDebugString(L"Bowl\n");
+							break;
+						}
+
+						
 						std::wstringstream s;
 						s << L"Goal Coords: " << mouthPoints[iFace].X << ", " << mouthPoints[iFace].Y << ", " << mouthPoints[iFace].Z << "\n" 
 							<< mouthOpenCounter[iFace] << " Min: " << mouthPoints[iFaceMin].Z << "\n";
@@ -860,10 +877,10 @@ void CFaceBasics::ProcessFaces()
 						//OutputDebugString(l);
 
 						// check if mouth is open
-						if (faceProperties[FaceProperty_MouthOpen] == DetectionResult_Yes && mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
+						if ((faceProperties[FaceProperty_MouthOpen] == DetectionResult_Yes || ActionsForJaco == ActionFood) && mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
 						{
 							mouthOpenCounter[iFace]++;
-							if (mouthOpenCounter[iFace] >= 30)
+							if (mouthOpenCounter[iFace] >= 30 || ActionsForJaco == ActionFood)
 							{
 								mouthOpenCounter[iFace] = 0;
 								OutputDebugString(L"Moving arm\n");
@@ -880,16 +897,24 @@ void CFaceBasics::ProcessFaces()
 									OutputDebugString(L"Arm Moved Successfully\n");
 								}
 							}
+							if (ActionsForJaco != ActionNone)
+							{
+							ActionsForJaco = ActionNone;
+							}
 						}
 						else
 						{
 							mouthOpenCounter[iFace] = 0;
 						}
-
-						if (faceProperties[FaceProperty_LeftEyeClosed] == DetectionResult_Yes && faceProperties[FaceProperty_RightEyeClosed] == DetectionResult_Yes && mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
+						// If min face and if one of the following is true:
+						// both eyes closed
+						// 'Bowl' is said by user
+						if (((faceProperties[FaceProperty_LeftEyeClosed] == DetectionResult_Yes  
+							&& faceProperties[FaceProperty_RightEyeClosed] == DetectionResult_Yes) || ActionsForJaco == ActionBowl)
+							&& mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
 						{
 							eyesClosedCounter[iFace]++;
-							if (eyesClosedCounter[iFace] >= 30)
+							if (eyesClosedCounter[iFace] >= 30 || ActionsForJaco == ActionBowl)
 							{
 								// Make this an enum
 								eyesClosedCounter[iFace] = 0;
@@ -903,6 +928,10 @@ void CFaceBasics::ProcessFaces()
 								Scoop();
 								
 
+							}
+							if (ActionsForJaco != ActionNone)
+							{
+								ActionsForJaco = ActionNone;
 							}
 						}
 						else
