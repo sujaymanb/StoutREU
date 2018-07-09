@@ -89,9 +89,14 @@ private:
 	int MoveArm(float x, float y, float z);
 
 	/// <summary>
-	/// Pick up food
+	/// Pick up food in scoop style
 	/// </summary>
 	int Scoop();
+
+	/// <summary>
+	/// Pick up food in soup style
+	/// </summary>
+	int Soup();
 
 	/// <summary>
 	/// Get the goal position

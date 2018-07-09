@@ -616,6 +616,71 @@ int CFaceBasics::Scoop()
 	return 1;
 }
 
+int CFaceBasics::Soup()
+{
+	MyEraseAllTrajectories();
+	CartesianPosition currentCommand;
+	TrajectoryPoint pointToSend;
+	pointToSend.InitStruct();
+
+	//We specify that this point will be a Cartesian Position.
+	pointToSend.Position.Type = CARTESIAN_POSITION;
+	pointToSend.LimitationsActive = 0;
+
+	MyGetCartesianCommand(currentCommand);
+
+
+	pointToSend.Position.CartesianPosition.X = currentCommand.Coordinates.X;	
+	pointToSend.Position.CartesianPosition.Y = currentCommand.Coordinates.Y;
+	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z - 0.08f;
+	pointToSend.Position.CartesianPosition.ThetaX = currentCommand.Coordinates.ThetaX;
+	pointToSend.Position.CartesianPosition.ThetaY = currentCommand.Coordinates.ThetaY;
+	pointToSend.Position.CartesianPosition.ThetaZ = currentCommand.Coordinates.ThetaZ;
+	pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
+	pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
+	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
+
+	int result = MySendAdvanceTrajectory(pointToSend);
+
+	Sleep(1000);
+	if (result != NO_ERROR_KINOVA)
+	{
+		OutputDebugString(L"Could not send advanced trajectory");
+	}
+
+	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z;
+
+	result = MySendAdvanceTrajectory(pointToSend);
+	if (result != NO_ERROR_KINOVA)
+	{
+		OutputDebugString(L"Could not send advanced trajectory");
+	}
+
+	Sleep(1000);
+	pointToSend.Position.CartesianPosition.ThetaZ = -1.2264;
+
+	result = MySendAdvanceTrajectory(pointToSend);
+	if (result != NO_ERROR_KINOVA)
+	{
+		OutputDebugString(L"Could not send advanced trajectory");
+	}
+
+	Sleep(1000);
+	pointToSend.Position.CartesianPosition.ThetaZ = currentCommand.Coordinates.ThetaZ;
+
+	result = MySendAdvanceTrajectory(pointToSend);
+	if (result != NO_ERROR_KINOVA)
+	{
+		OutputDebugString(L"Could not send advanced trajectory");
+	}
+
+	Sleep(3000);
+	OutputDebugString(L"erase\n");
+	MyEraseAllTrajectories();
+
+	return 1;
+}
+
 /// <summary>
 /// Main processing function
 /// </summary>
@@ -926,6 +991,7 @@ void CFaceBasics::ProcessFaces()
 							}
 							else if (mode == SoupMode)
 							{
+								Soup();
 								OutputDebugString(L"\nIn Soup Mode\n");
 							}
 							else if (mode == DrinkMode)
@@ -984,6 +1050,7 @@ void CFaceBasics::ProcessFaces()
 
 						
 						
+
 					}
 				}
 
