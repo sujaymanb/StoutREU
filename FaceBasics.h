@@ -16,6 +16,14 @@ enum EatingMode
 	DrinkMode
 };
 
+enum State
+{
+	WaitForEyesClosed,
+	ArmMovingTowardBowl,
+	WaitForMouthOpen,
+	ArmMovingTowardMouth
+};
+
 class CFaceBasics
 {
     static const int       cColorWidth  = 1920;

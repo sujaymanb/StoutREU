@@ -801,6 +801,7 @@ void CFaceBasics::ProcessFaces()
 				DetectionResult faceProperties[FaceProperty::FaceProperty_Count];
 				D2D1_POINT_2F faceTextLayout;
 				static EatingMode mode = SoupMode;
+				static State armState = WaitForEyesClosed;
 
 				hr = pFaceFrame->get_FaceFrameResult(&pFaceFrameResult);
 
@@ -859,7 +860,7 @@ void CFaceBasics::ProcessFaces()
 							break;
 						case ActionScoop:
 							OutputDebugString(L"Scoop\n");
-							break;
+ 							break;
 						case ActionSoup:
 							OutputDebugString(L"Soup\n");
 							break;
@@ -879,6 +880,101 @@ void CFaceBasics::ProcessFaces()
 							mode = DrinkMode;
 						}
 						
+
+						//state stuff start 
+						if (armState == WaitForEyesClosed)
+						{
+
+							// If min face and if one of the following is true:
+							// both eyes closed
+							// 'Bowl' is said by user
+							if (((faceProperties[FaceProperty_LeftEyeClosed] == DetectionResult_Yes
+								&& faceProperties[FaceProperty_RightEyeClosed] == DetectionResult_Yes) || ActionsForJaco == ActionBowl)
+								&& mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
+							{
+								eyesClosedCounter[iFace]++;
+								if (eyesClosedCounter[iFace] >= 20 || ActionsForJaco == ActionBowl)
+								{
+									// Make this an enum
+									eyesClosedCounter[iFace] = 0;
+
+									armState = ArmMovingTowardBowl;
+								}
+								if (ActionsForJaco != ActionNone)
+								{
+									ActionsForJaco = ActionNone;
+								}
+							}
+							else
+							{
+								eyesClosedCounter[iFace] = 0;
+							}
+						}
+						else if (armState == ArmMovingTowardBowl)
+						{
+							float x, y, z;
+							// go to plate, position hard coded for now
+							KinectToArm(-0.370, .1, 0, &x, &y, &z);
+							MoveArm(x, y, z);
+
+							// pick up food
+
+							if (mode == ScoopMode)
+							{
+								Scoop();
+								OutputDebugString(L"\nIn Scoop Mode\n");
+							}
+							else if (mode == SoupMode)
+							{
+								OutputDebugString(L"\nIn Soup Mode\n");
+							}
+							else if (mode == DrinkMode)
+							{
+								OutputDebugString(L"\nIn Drink Mode\n");
+							}
+							
+							armState = WaitForMouthOpen;
+						} else if (armState == WaitForMouthOpen)
+						{
+								// check if mouth is open
+								if ((faceProperties[FaceProperty_MouthOpen] == DetectionResult_Yes || ActionsForJaco == ActionFood) && mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
+								{
+									mouthOpenCounter[iFace]++;
+									if (mouthOpenCounter[iFace] >= 30 || ActionsForJaco == ActionFood)
+									{
+										mouthOpenCounter[iFace] = 0;
+										armState = ArmMovingTowardMouth;
+									}
+									if (ActionsForJaco != ActionNone)
+									{
+										ActionsForJaco = ActionNone;
+									}
+								}
+								else
+								{
+									mouthOpenCounter[iFace] = 0;
+								}
+						}
+						else // if (armState == ArmMovingTowardMouth)
+						{
+							OutputDebugString(L"Moving arm\n");
+							// send move command
+							// using dummy coordinates for now					
+							int armResult;
+							float x, y, z;
+							KinectToArm(mouthPoints[iFace].X, mouthPoints[iFace].Y, mouthPoints[iFace].Z, &x, &y, &z);
+							//armResult = MoveArm(0.3248, 0.45, 0.1672);
+
+							armResult = MoveArm(x, y, z);
+							if (armResult == 1)
+							{
+								OutputDebugString(L"Arm Moved Successfully\n");
+							}
+							armState = WaitForEyesClosed;
+						}
+
+
+						//state stuff end
 						std::wstringstream s;
 						s << L"Goal Coords: " << mouthPoints[iFace].X << ", " << mouthPoints[iFace].Y << ", " << mouthPoints[iFace].Z << "\n" 
 							<< mouthOpenCounter[iFace] << " Min: " << mouthPoints[iFaceMin].Z << "\n";
@@ -886,80 +982,8 @@ void CFaceBasics::ProcessFaces()
 						LPCWSTR l = ws.c_str();
 						//OutputDebugString(l);
 
-						// check if mouth is open
-						if ((faceProperties[FaceProperty_MouthOpen] == DetectionResult_Yes || ActionsForJaco == ActionFood) && mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
-						{
-							mouthOpenCounter[iFace]++;
-							if (mouthOpenCounter[iFace] >= 30 || ActionsForJaco == ActionFood)
-							{
-								mouthOpenCounter[iFace] = 0;
-								OutputDebugString(L"Moving arm\n");
-								// send move command
-								// using dummy coordinates for now					
-								int armResult;
-								float x, y, z;
-								KinectToArm(mouthPoints[iFace].X, mouthPoints[iFace].Y, mouthPoints[iFace].Z, &x, &y, &z);
-								//armResult = MoveArm(0.3248, 0.45, 0.1672);
-								
-								armResult = MoveArm(x, y, z);
-								if (armResult == 1)
-								{
-									OutputDebugString(L"Arm Moved Successfully\n");
-								}
-							}
-							if (ActionsForJaco != ActionNone)
-							{
-							ActionsForJaco = ActionNone;
-							}
-						}
-						else
-						{
-							mouthOpenCounter[iFace] = 0;
-						}
-						// If min face and if one of the following is true:
-						// both eyes closed
-						// 'Bowl' is said by user
-						if (((faceProperties[FaceProperty_LeftEyeClosed] == DetectionResult_Yes  
-							&& faceProperties[FaceProperty_RightEyeClosed] == DetectionResult_Yes) || ActionsForJaco == ActionBowl)
-							&& mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
-						{
-							eyesClosedCounter[iFace]++;
-							if (eyesClosedCounter[iFace] >= 20 || ActionsForJaco == ActionBowl)
-							{
-								// Make this an enum
-								eyesClosedCounter[iFace] = 0;
-
-								float x, y, z;
-								// go to plate, position hard coded for now
-								KinectToArm(-0.370, .1, 0, &x, &y, &z);
-								MoveArm(x, y, z);
-
-								// pick up food
-
-								if (mode == ScoopMode)
-								{
-									Scoop();
-									OutputDebugString(L"\nIn Scoop Mode\n");
-								}
-								else if (mode == SoupMode)
-								{
-									OutputDebugString(L"\nIn Soup Mode\n");
-								}
-								else if (mode == DrinkMode)
-								{
-									OutputDebugString(L"\nIn Drink Mode\n");
-								}
-
-							}
-							if (ActionsForJaco != ActionNone)
-							{
-								ActionsForJaco = ActionNone;
-							}
-						}
-						else
-						{
-							eyesClosedCounter[iFace] = 0;
-						}
+						
+						
 					}
 				}
 
