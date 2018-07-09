@@ -28,6 +28,8 @@ enum Action
 	ActionDrink,
 	ActionFood,
 	ActionBowl,
+	ActionSoup,
+	ActionScoop,
 	ActionNone
 };
 

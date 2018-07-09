@@ -575,7 +575,7 @@ int CFaceBasics::Scoop()
 	// dip down and back up for now
 	pointToSend.Position.CartesianPosition.X = currentCommand.Coordinates.X;
 	pointToSend.Position.CartesianPosition.Y = currentCommand.Coordinates.Y;
-	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z - 0.05f;
+	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z - 0.05f;	
 	pointToSend.Position.CartesianPosition.ThetaX = 2.4858;
 	pointToSend.Position.CartesianPosition.ThetaY = 0.3713;
 	pointToSend.Position.CartesianPosition.ThetaZ = -1.5505;
@@ -800,6 +800,7 @@ void CFaceBasics::ProcessFaces()
 				Vector4 faceRotation;
 				DetectionResult faceProperties[FaceProperty::FaceProperty_Count];
 				D2D1_POINT_2F faceTextLayout;
+				static EatingMode mode = SoupMode;
 
 				hr = pFaceFrame->get_FaceFrameResult(&pFaceFrameResult);
 
@@ -850,16 +851,33 @@ void CFaceBasics::ProcessFaces()
 						case ActionDrink:
 							OutputDebugString(L"Drink\n");
 							break;
-
 						case ActionFood:
 							OutputDebugString(L"Food\n");
 							break;
-
 						case ActionBowl:
 							OutputDebugString(L"Bowl\n");
 							break;
+						case ActionScoop:
+							OutputDebugString(L"Scoop\n");
+							break;
+						case ActionSoup:
+							OutputDebugString(L"Soup\n");
+							break;
 						}
+						
 
+						if (ActionsForJaco == ActionScoop)
+						{
+							mode = ScoopMode;
+						}
+						else if (ActionsForJaco == ActionSoup)
+						{
+							mode = SoupMode;
+						}
+						else if (ActionsForJaco == ActionDrink)
+						{
+							mode = DrinkMode;
+						}
 						
 						std::wstringstream s;
 						s << L"Goal Coords: " << mouthPoints[iFace].X << ", " << mouthPoints[iFace].Y << ", " << mouthPoints[iFace].Z << "\n" 
@@ -906,7 +924,7 @@ void CFaceBasics::ProcessFaces()
 							&& mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
 						{
 							eyesClosedCounter[iFace]++;
-							if (eyesClosedCounter[iFace] >= 30 || ActionsForJaco == ActionBowl)
+							if (eyesClosedCounter[iFace] >= 20 || ActionsForJaco == ActionBowl)
 							{
 								// Make this an enum
 								eyesClosedCounter[iFace] = 0;
@@ -917,8 +935,20 @@ void CFaceBasics::ProcessFaces()
 								MoveArm(x, y, z);
 
 								// pick up food
-								Scoop();
-								
+
+								if (mode == ScoopMode)
+								{
+									Scoop();
+									OutputDebugString(L"\nIn Scoop Mode\n");
+								}
+								else if (mode == SoupMode)
+								{
+									OutputDebugString(L"\nIn Soup Mode\n");
+								}
+								else if (mode == DrinkMode)
+								{
+									OutputDebugString(L"\nIn Drink Mode\n");
+								}
 
 							}
 							if (ActionsForJaco != ActionNone)

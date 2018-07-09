@@ -9,6 +9,12 @@
 #include "resource.h"
 #include "ImageRenderer.h"
 #include "stdafx.h"
+enum EatingMode
+{
+	SoupMode,
+	ScoopMode,
+	DrinkMode
+};
 
 class CFaceBasics
 {
@@ -172,8 +178,8 @@ private:
 	float				   x_offset = -0.4826;
 	float				   y_offset = 0.1397;
 	float				   z_offset = 0.635;
-	float				   mouth_offsetX = -0.10;
-	float				   mouth_offsetY = -0.07;
-	float				   mouth_offsetZ = 0.02;
+	float				   mouth_offsetX = 0.05; // was -.10
+	float				   mouth_offsetY = 0.05; // -.07
+ 	float				   mouth_offsetZ = -0.2; // was .02
 };
 

@@ -452,7 +452,9 @@ Action CSpeechBasics::MapSpeechTagToAction(LPCWSTR pszSpeechTag)
     {
         {L"DRINK", ActionDrink},
         {L"FOOD", ActionFood},
-        {L"BOWL", ActionBowl}
+        {L"BOWL", ActionBowl},
+		{L"SOUP", ActionSoup},
+		{L"SCOOP", ActionScoop}
     };
 
 	
@@ -498,6 +500,12 @@ void CSpeechBasics::DoAction(Action action)
 
 	case ActionBowl:
 		OutputDebugString(L"Bowl\n");
+		break;
+	case ActionSoup:
+		OutputDebugString(L"Soup");
+		break;
+	case ActionScoop:
+		OutputDebugString(L"Scoop");
 		break;
 	}
 

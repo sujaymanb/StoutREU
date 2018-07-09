@@ -24,6 +24,20 @@
 	  <item> back </item>
         </one-of>
       </item>
+      <item>
+        <tag>SOUP</tag>
+        <one-of>
+          <item> soup </item>
+	  <item> soups </item>
+        </one-of>
+      </item>
+      <item>
+        <tag>SCOOP</tag>
+        <one-of>
+          <item> scoop </item>
+	  <item> scoops </item>
+        </one-of>
+      </item>
     </one-of>
   </rule>
 </grammar>

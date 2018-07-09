@@ -140,6 +140,9 @@
 xcopy "$(KINECTSDK20_DIR)Redist\Face\x64\Kinect20.Face.dll" "$(TargetDir)" /c /y
       </Command>
     </PostBuildEvent>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
