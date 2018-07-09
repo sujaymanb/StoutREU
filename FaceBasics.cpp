@@ -151,7 +151,7 @@ CFaceBasics::CFaceBasics() :
 			MySetActiveDevice(list[0]);
 
 			// Move home
-			//MyMoveHome();
+			MoveArm(.5273, -.4949, .0674);
 		}
 	}
 }
