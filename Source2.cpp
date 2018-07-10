@@ -82,9 +82,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		return hr;
 	}
 
-	
-
-
 	thread th1(SpeechRecognizerThread, hInstance, nCmdShow);
 	thread th2(FaceBasicsThread, hInstance, nCmdShow);
 

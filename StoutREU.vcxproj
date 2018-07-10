@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ArTracker.cpp" />
     <ClCompile Include="FaceBasics.cpp" />
     <ClCompile Include="ImageRenderer.cpp" />
     <ClCompile Include="MealRobot.cpp" />
@@ -31,6 +32,7 @@
     <Image Include="SpeechBasics-D2D\app.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ArTracker.h" />
     <ClInclude Include="CommandLayer.h" />
     <ClInclude Include="CommunicationLayerWindows.h" />
     <ClInclude Include="FaceBasics.h" />
@@ -127,13 +129,15 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(OPENCV_DIR)\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EntryPointSymbol>
       </EntryPointSymbol>
-      <AdditionalDependencies>Dwrite.lib;kinect20.lib;Kinect20.Face.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_core400d.lib;opencv_aruco400d.lib;opencv_imgproc400d.lib;opencv_imgcodecs400d.lib;opencv_highgui400d.lib;opencv_ml400d.lib;opencv_video400d.lib;opencv_videoio400d.lib;opencv_videostab400d.lib;opencv_features2d400d.lib;opencv_calib3d400d.lib;opencv_ccalib400d.lib;opencv_flann400d.lib;Dwrite.lib;kinect20.lib;Kinect20.Face.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OPENCV_DIR)\x86\vc15\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(KINECTSDK20_DIR)Redist\Face\x64\NuiDatabase" "$(TargetDir)NuiDatabase" /e /y /i /r
