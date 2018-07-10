@@ -3,6 +3,8 @@
 #include "FaceBasics.h"
 #include "SpeechBasics-D2D/SpeechBasics.h"
 #include "stdafx.h"
+#include "ArTracker.h"
+#include "opencv2/core.hpp"
 #define TESTING 0
 
 
@@ -87,6 +89,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 	th1.join();
 	th2.join();
+
+	// test AR
+	cv::Vec3d armVec, bowlVec;
+	ArTracker tracker;
+	tracker.GetARPosition(armVec, bowlVec);
+
+	std::wstringstream s;
+	s << L"Arm Translation: " << armVec[0] << ", " << armVec[1] << ", " << armVec[2] << "\n"
+		<< L"Bowl Translation: " << bowlVec[0] << ", " << bowlVec[1] << ", " << bowlVec[2] << "\n";
+	std::wstring ws = s.str();
+	LPCWSTR l = ws.c_str();
+	OutputDebugString(l);
+	// end test AR
 
 	return 0;
 

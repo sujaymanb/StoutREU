@@ -30,6 +30,8 @@ ArTracker::ArTracker()
 		framesource = NULL;
 	}
 
+	Sleep(6000);
+
 	// init camera
 	cameraMatrix = Mat::eye(3, 3, CV_64F);
 	loadCameraCalibration("Calibration");

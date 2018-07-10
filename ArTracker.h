@@ -12,14 +12,14 @@ class ArTracker
 {
 	const float arucoSquareDimensions = 0.066f; // meters	
 	IColorFrameReader* reader;
-	Mat cameraMatrix, distCoefficients;
+	cv::Mat cameraMatrix, distCoefficients;
 
 public:
 	ArTracker();
 
 	~ArTracker();
 
-	void GetARPosition(Vec3d& armTranslation, Vec3d& bowlTranslation);
+	void GetARPosition(cv::Vec3d& armTranslation, cv::Vec3d& bowlTranslation);
 
 private:
 	bool getKinectData(cv::Mat& colorMat);
