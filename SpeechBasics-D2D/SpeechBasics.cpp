@@ -22,7 +22,6 @@ Action ActionsForJaco = ActionNone;
 /// Constructor
 /// </summary>
 CSpeechBasics::CSpeechBasics() :
-    m_pD2DFactory(NULL),
     m_pAudioBeam(NULL),
     m_pAudioStream(NULL),
     m_p16BitAudioStream(NULL),
@@ -54,9 +53,6 @@ CSpeechBasics::~CSpeechBasics()
     SafeRelease(m_pAudioStream);
     SafeRelease(m_pAudioBeam);
     SafeRelease(m_pKinectSensor);
-
-    // clean up Direct2D
-    SafeRelease(m_pD2DFactory);
 }
 
 /// <summary>

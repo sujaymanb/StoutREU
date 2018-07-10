@@ -85,12 +85,7 @@ private:
     static LPCWSTR          GrammarFileName;
 
     // Main application dialog window
-    HWND                    m_hWnd;
-
-    // Factory used to create Direct2D objects
-    ID2D1Factory*           m_pD2DFactory;
-
-
+	HWND                    m_hWnd;
 
     // A single audio beam off the Kinect sensor.
     IAudioBeam*             m_pAudioBeam;

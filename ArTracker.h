@@ -12,7 +12,6 @@ class ArTracker
 {
 	const float arucoSquareDimensions = 0.066f; // meters	
 	IColorFrameReader* reader;
-	cv::Mat cameraMatrix, distCoefficients;
 
 public:
 	ArTracker();
@@ -24,5 +23,7 @@ public:
 private:
 	bool getKinectData(cv::Mat& colorMat);
 
-	bool loadCameraCalibration(string name);
+	bool loadCameraCalibration(std::string name);
+
+	cv::Mat cameraMatrix, distCoefficients;
 };
