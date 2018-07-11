@@ -90,8 +90,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 	cv::Vec3d armVec, bowlVec;
 	ArTracker tracker;
-	tracker.GetARP
-		osition(armVec, bowlVec);
+	tracker.GetARPosition(armVec, bowlVec);
 
 	std::wstringstream s;
 	s << L"Arm Translation: " << armVec[0] << ", " << armVec[1] << ", " << armVec[2] << "\n"
@@ -100,6 +99,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	LPCWSTR l = ws.c_str();
 	OutputDebugString(l);
 	// end test AR
+
 
 	th1.join();
 	th2.join();

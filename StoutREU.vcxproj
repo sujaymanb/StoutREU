@@ -53,6 +53,9 @@
   <ItemGroup>
     <ResourceCompile Include="FaceBasics.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="TestKinectCalib.txt" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{AC776ACF-58A4-4BB4-9797-D687E3DC7E68}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
