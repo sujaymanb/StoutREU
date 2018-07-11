@@ -85,6 +85,9 @@ CFaceBasics::CFaceBasics() :
 	y_offset = -armVec[1];
 	z_offset = armVec[2];
 
+	bowl_xpos = -bowlVec[0];
+	bowl_ypos = -bowlVec[1];
+	bowl_zpos = bowlVec[2];
 
 	std::wstringstream s;
 	s << L"\nMouth offset x: " << x_offset << "\n" << "Mouth offset y: " << y_offset << "\n" << "Mouth offset z: " << z_offset << "\n";
@@ -986,7 +989,7 @@ void CFaceBasics::ProcessFaces()
 						{
 							float x, y, z;
 							// go to plate, position hard coded for now
-							KinectToArm(-0.370, .1, 0, &x, &y, &z);
+							KinectToArm(bowl_xpos, bowl_ypos, bowl_zpos, &x, &y, &z);
 							MoveArm(x, y, z);
 
 							// pick up food

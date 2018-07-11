@@ -196,5 +196,9 @@ private:
 	float				   mouth_offsetX = 0.05; // was -.10
 	float				   mouth_offsetY = 0.05; // -.07
  	float				   mouth_offsetZ = -0.2; // was .02
+
+	float				   bowl_xpos;
+	float				   bowl_ypos;
+	float				   bowl_zpos;
 };
 
