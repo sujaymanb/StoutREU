@@ -9,6 +9,8 @@
 #include "resource.h"
 #include "ImageRenderer.h"
 #include "stdafx.h"
+#define TESTING 1
+
 enum EatingMode
 {
 	SoupMode,
@@ -188,9 +190,9 @@ private:
 	int					   eyesClosedCounter[BODY_COUNT];
 
 	// offsets
-	float				   x_offset = -0.4826;
-	float				   y_offset = 0.1397;
-	float				   z_offset = 0.635;
+	float				   x_offset; // = -0.4826;
+	float				   y_offset; // = 0.1397;
+	float				   z_offset; // = 0.635;
 	float				   mouth_offsetX = 0.05; // was -.10
 	float				   mouth_offsetY = 0.05; // -.07
  	float				   mouth_offsetZ = -0.2; // was .02

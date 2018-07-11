@@ -4,12 +4,12 @@
 #include "SpeechBasics-D2D/SpeechBasics.h"
 #include "stdafx.h"
 #include "ArTracker.h"
-#define TESTING 0
-
 
 #define INITGUID
 #include <guiddef.h>
 
+
+cv::Vec3d armVec, bowlVec;
 // Static initializers
 //LPCWSTR CSpeechBasics::GrammarFileName = L"SpeechBasics-D2D/SpeechBasics-D2D.grxml";
 
@@ -24,16 +24,8 @@ IKinectSensor*  m_pKinectSensor;
 
 void FaceBasicsThread(HINSTANCE hInstance, int nCmdShow)
 {
-#if TESTING
-	while (1)
-	{
-		OutputDebugString(L"Hello World\n");
-		Sleep(10000);
-	}
-#else
 	CFaceBasics application;
 	application.Run(hInstance, nCmdShow);
-#endif
 }
 
 int SpeechRecognizerThread(HINSTANCE hInstance, int nCmdShow)
@@ -82,24 +74,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		OutputDebugString(L"Failed getting default sensor!");
 		return hr;
 	}
+	m_pKinectSensor->Open();
+
+
+	ArTracker tracker;
+	tracker.GetARPosition(armVec, bowlVec);
 
 	thread th1(SpeechRecognizerThread, hInstance, nCmdShow);
 	thread th2(FaceBasicsThread, hInstance, nCmdShow);
 
 	// test AR
-
-	cv::Vec3d armVec, bowlVec;
-	ArTracker tracker;
-	tracker.GetARPosition(armVec, bowlVec);
-
-	std::wstringstream s;
-	s << L"Arm Translation: " << armVec[0] << ", " << armVec[1] << ", " << armVec[2] << "\n"
-		<< L"Bowl Translation: " << bowlVec[0] << ", " << bowlVec[1] << ", " << bowlVec[2] << "\n";
-	std::wstring ws = s.str();
-	LPCWSTR l = ws.c_str();
-	OutputDebugString(l);
-	// end test AR
-
 
 	th1.join();
 	th2.join();
@@ -107,4 +91,4 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	
 	return 0;
 
-}
+}	

@@ -62,7 +62,6 @@ CSpeechBasics::~CSpeechBasics()
 /// <param name="nCmdShow">whether to display minimized, maximized, or normally</param>
 int CSpeechBasics::Run(HINSTANCE hInstance, int nCmdShow)
 {
-	OutputDebugString(L"Entered Run function\n\n");
     MSG       msg = {0};
     WNDCLASS  wc;
     const int maxEventCount = 2;
@@ -115,7 +114,6 @@ int CSpeechBasics::Run(HINSTANCE hInstance, int nCmdShow)
         {
         case WAIT_OBJECT_0:
 
-			OutputDebugString(L"wait  result");
             {
                 BOOLEAN sensorState = FALSE;
 
@@ -145,7 +143,7 @@ int CSpeechBasics::Run(HINSTANCE hInstance, int nCmdShow)
                     }
                     if (SUCCEEDED(hr))
                     {
-						OutputDebugString(L"Say: \"Forward\", \"Back\", \"Turn Left\" or \"Turn Right\n");
+						OutputDebugString(L"Ready to recieve commands\n");
                     }
                     else
                     {
@@ -155,10 +153,11 @@ int CSpeechBasics::Run(HINSTANCE hInstance, int nCmdShow)
             }
             break;
         case WAIT_OBJECT_0 + 1:
-			OutputDebugString(L"case 2\n");
             if(eventCount == 2)
             {
+			#if TESTING
 				OutputDebugString(L"Entering Process\n");
+			#endif
                 ProcessSpeech();
             }
             break;
@@ -416,7 +415,6 @@ void CSpeechBasics::ProcessSpeech()
 							{
 								ActionsForJaco = tempAction;
 							}
-                            DoAction(tempAction);
                         }
                     }
                     ::CoTaskMemFree(pPhrase);
@@ -475,34 +473,4 @@ Action CSpeechBasics::MapSpeechTagToAction(LPCWSTR pszSpeechTag)
 void CSpeechBasics::SetStatusMessage(const WCHAR* szMessage)
 {
     SendDlgItemMessageW(m_hWnd, IDC_STATUS, WM_SETTEXT, 0, (LPARAM)szMessage);
-}
-
-/// <summary>
-/// Makes the turtle performs the specified action.
-/// </summary>
-void CSpeechBasics::DoAction(Action action)
-{
-	// Number of degrees in a right angle.
-
-	switch (action)
-	{
-	case ActionDrink:
-		OutputDebugString(L"Drink\n");
-		break;
-
-	case ActionFood:
-		OutputDebugString(L"Food\n");
-		break;
-
-	case ActionBowl:
-		OutputDebugString(L"Bowl\n");
-		break;
-	case ActionSoup:
-		OutputDebugString(L"Soup");
-		break;
-	case ActionScoop:
-		OutputDebugString(L"Scoop");
-		break;
-	}
-
 }

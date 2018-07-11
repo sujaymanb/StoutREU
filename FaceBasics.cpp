@@ -9,6 +9,7 @@
 #include "resource.h"
 #include "FaceBasics.h"
 #include "SpeechBasics-D2D/SpeechBasics.h"
+#include "ArTracker.h"
 
 // Kinova Includes
 #include "CommunicationLayerWindows.h"
@@ -23,6 +24,7 @@
 #include <conio.h>
 #include <cstdlib>
 
+	
 // Kinova API init
 
 // A handle to the API.
@@ -78,6 +80,18 @@ CFaceBasics::CFaceBasics() :
     m_pColorRGBX(nullptr),
     m_pBodyFrameReader(nullptr)	
 {
+
+	x_offset = -armVec[0];
+	y_offset = -armVec[1];
+	z_offset = armVec[2];
+
+
+	std::wstringstream s;
+	s << L"\nMouth offset x: " << x_offset << "\n" << "Mouth offset y: " << y_offset << "\n" << "Mouth offset z: " << z_offset << "\n";
+	std::wstring ws = s.str();
+	LPCWSTR l = ws.c_str();
+	OutputDebugString(l);
+
     LARGE_INTEGER qpf = {0};
     if (QueryPerformanceFrequency(&qpf))
     {
@@ -120,16 +134,12 @@ CFaceBasics::CFaceBasics() :
 		(MyMoveHome == NULL) || (MyInitFingers == NULL))
 
 	{
-		OutputDebugString(L"* * *  Error During Arm Initialization  * * *\n");
+		OutputDebugString(L"FaceBasics.cpp: Error During Arm Initialization\n");
 		programResult = 0;
 	}
 	else
 	{
-		OutputDebugString(L"Arm Initialization Complete\n\n");
-
 		int result = (*MyInitAPI)();
-
-		OutputDebugString(L"Initialization's result : \n");
 
 		KinovaDevice list[MAX_KINOVA_DEVICE];
 
@@ -137,12 +147,13 @@ CFaceBasics::CFaceBasics() :
 
 		if (devicesCount < 1)
 		{
-			OutputDebugString(L"Robots not found \n");
+			OutputDebugString(L"FaceBasics.cpp: Robot not found \n");
 		}
 		else
 		{
+
 			std::wstringstream s;
-			s << L"Found a robot on the USB bus (" << list[0].SerialNumber << ")\n";
+			s << L"FaceBasics.cpp: Found a robot on the USB bus (" << list[0].SerialNumber << ")\n";
 			std::wstring ws = s.str();
 			LPCWSTR l = ws.c_str();
 			OutputDebugString(l);
@@ -203,7 +214,6 @@ CFaceBasics::~CFaceBasics()
     SafeRelease(m_pKinectSensor);
 
 	// close arm api
-	OutputDebugString(L"Closing Arm API\n");
 	int result = (*MyCloseAPI)();
 	FreeLibrary(commandLayer_handle);
 }
@@ -425,12 +435,12 @@ int CFaceBasics::WaitForArmMove(float goalX, float goalY, float goalZ)
 	{
 		if (timeout >= 10)
 			break;
-		OutputDebugString(L"Arm is moving\n");
+		OutputDebugString(L"FaceBasics.cpp: Arm is moving\n");
 		MyGetCartesianCommand(current);
 		Sleep(1000);
 		timeout++;
 	}
-	OutputDebugString(L"Arm is stopped\n");
+	OutputDebugString(L"FaceBasics.cpp: Arm is stopped\n");
 	return 0;
 }
 
@@ -444,12 +454,14 @@ bool CFaceBasics::ArmMoving(float newX, float newY, float newZ, float goalX, flo
 	}
 	else
 	{
+#if TESTING 
 		std::wstringstream s;
 		s << L"Current Coords: " << newX << ", " << newY << ", " << newZ << "\n"
 			<< L"Goal Coords: " << goalX << ", " << goalY << ", " << goalZ << "\n";
 		std::wstring ws = s.str();
 		LPCWSTR l = ws.c_str();
 		OutputDebugString(l);
+#endif
 		return true;
 	}
 }
@@ -530,7 +542,6 @@ int CFaceBasics::MoveArm(float x, float y, float z)
 	pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
 	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
 
-	OutputDebugString(L"Sending to neutral.\n");
 	int result = MySendAdvanceTrajectory(pointToSend);
 	if (result != NO_ERROR_KINOVA)
 	{
@@ -548,7 +559,6 @@ int CFaceBasics::MoveArm(float x, float y, float z)
 	}
 
 	WaitForArmMove(x, y, z);
-	OutputDebugString(L"erase\n");
 	MyEraseAllTrajectories();
 	
 	return 1;
@@ -583,14 +593,13 @@ int CFaceBasics::Scoop()
 	pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
 	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
 
-	OutputDebugString(L"Dip down.\n");
 	int result = MySendAdvanceTrajectory(pointToSend);
 	if (result != NO_ERROR_KINOVA)
 	{
 		OutputDebugString(L"Could not send advanced trajectory");
 	}
 
-	OutputDebugString(L"Scrape\n");
+	// scrape
 	pointToSend.Position.CartesianPosition.Y = currentCommand.Coordinates.Y - 0.06f;
 	result = MySendAdvanceTrajectory(pointToSend);
 	if (result != NO_ERROR_KINOVA)
@@ -598,7 +607,7 @@ int CFaceBasics::Scoop()
 		OutputDebugString(L"Could not send advanced trajectory");
 	}
 
-	OutputDebugString(L"Back up.\n");
+	// back up
 	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z;
 	pointToSend.Position.CartesianPosition.ThetaX = 1.8796;
 	pointToSend.Position.CartesianPosition.ThetaY = 0.4309;
@@ -610,7 +619,6 @@ int CFaceBasics::Scoop()
 	}
 
 	Sleep(3000);
-	OutputDebugString(L"erase\n");
 	MyEraseAllTrajectories();
 
 	return 1;
@@ -675,7 +683,6 @@ int CFaceBasics::Soup()
 	}
 
 	Sleep(3000);
-	OutputDebugString(L"erase\n");
 	MyEraseAllTrajectories();
 
 	return 1;
@@ -911,7 +918,7 @@ void CFaceBasics::ProcessFaces()
 								min = mouthPoints[i].Z;
 							}
 						}
-
+						#if TESTING
 						switch (ActionsForJaco)
 						{
 						case ActionDrink:
@@ -930,7 +937,7 @@ void CFaceBasics::ProcessFaces()
 							OutputDebugString(L"Soup\n");
 							break;
 						}
-						
+						#endif			
 
 						if (ActionsForJaco == ActionScoop)
 						{
@@ -983,7 +990,7 @@ void CFaceBasics::ProcessFaces()
 							MoveArm(x, y, z);
 
 							// pick up food
-
+							#if TESTING
 							if (mode == ScoopMode)
 							{
 								Scoop();
@@ -997,8 +1004,8 @@ void CFaceBasics::ProcessFaces()
 							else if (mode == DrinkMode)
 							{
 								OutputDebugString(L"\nIn Drink Mode\n");
-							}
-							
+							}	
+							#endif				
 							armState = WaitForMouthOpen;
 						} else if (armState == WaitForMouthOpen)
 						{
@@ -1023,7 +1030,6 @@ void CFaceBasics::ProcessFaces()
 						}
 						else // if (armState == ArmMovingTowardMouth)
 						{
-							OutputDebugString(L"Moving arm\n");
 							// send move command
 							// using dummy coordinates for now					
 							int armResult;
@@ -1032,14 +1038,11 @@ void CFaceBasics::ProcessFaces()
 							//armResult = MoveArm(0.3248, 0.45, 0.1672);
 
 							armResult = MoveArm(x, y, z);
-							if (armResult == 1)
-							{
-								OutputDebugString(L"Arm Moved Successfully\n");
-							}
+				
 							armState = WaitForEyesClosed;
 						}
 
-
+					#if TESTING
 						//state stuff end
 						std::wstringstream s;
 						s << L"Goal Coords: " << mouthPoints[iFace].X << ", " << mouthPoints[iFace].Y << ", " << mouthPoints[iFace].Z << "\n" 
@@ -1047,7 +1050,7 @@ void CFaceBasics::ProcessFaces()
 						std::wstring ws = s.str();
 						LPCWSTR l = ws.c_str();
 						//OutputDebugString(l);
-
+					#endif
 						
 						
 
