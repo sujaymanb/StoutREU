@@ -1,7 +1,7 @@
 #pragma once
 
 #include "opencv2/core.hpp"
-
+extern cv::Vec3d armVec, bowlVec; 
 class JacoArm
 {
 public:

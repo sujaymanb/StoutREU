@@ -93,7 +93,7 @@ JacoArm::JacoArm(cv::Vec3d armVec)
 			//Setting the current device as the active device.
 			MySetActiveDevice(list[0]);
 
-			Sleep(5000);
+			Sleep(1000);
 			// Move home
 			MoveArm(.5273, -.4949, .0674);
 		}
@@ -121,7 +121,7 @@ int JacoArm::MoveArm(float x, float y, float z)
 	pointToSend.LimitationsActive = 0;
 
 	MyGetCartesianCommand(currentCommand);
-
+	
 	float neutral_x, neutral_y, neutral_z;
 	
 	KinectToArm(0.0, .15, 0.1, &neutral_x, &neutral_y, &neutral_z);
@@ -141,6 +141,7 @@ int JacoArm::MoveArm(float x, float y, float z)
 	{
 		OutputDebugString(L"Could not send advanced trajectory");
 	}
+	
 	pointToSend.Position.CartesianPosition.X = x;
 	pointToSend.Position.CartesianPosition.Y = y;
 	pointToSend.Position.CartesianPosition.Z = z;
