@@ -55,26 +55,6 @@ public:
     ~CSpeechBasics();
 
     /// <summary>
-    /// Handles window messages, passes most to the class instance to handle
-    /// </summary>
-    /// <param name="hWnd">window message is for</param>
-    /// <param name="uMsg">message</param>
-    /// <param name="wParam">message data</param>
-    /// <param name="lParam">additional message data</param>
-    /// <returns>result of message processing</returns>
-    static LRESULT CALLBACK MessageRouter(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-
-    /// <summary>
-    /// Handle windows messages for a class instance
-    /// </summary>
-    /// <param name="hWnd">window message is for</param>
-    /// <param name="uMsg">message</param>
-    /// <param name="wParam">message data</param>
-    /// <param name="lParam">additional message data</param>
-    /// <returns>result of message processing</returns>
-    LRESULT CALLBACK        DlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-
-    /// <summary>
     /// Creates the main window and begins processing
     /// </summary>
     /// <param name="hInstance">handle to the application instance</param>
@@ -162,15 +142,4 @@ private:
     /// Action that matches <paramref name="pszSpeechTag"/>, or TurtleActionNone if no matches were found.
     /// </returns>
     Action            MapSpeechTagToAction(LPCWSTR pszSpeechTag);
-
-    /// <summary>
-    /// Set the status bar message.
-    /// </summary>
-    /// <param name="szMessage">message to display.</param>
-    void                    SetStatusMessage(const WCHAR* szMessage);
-
-	/// <summary>
-	/// Makes the turtle performs the specified action.
-	/// </summary>
-	void  DoAction(Action action);
 };

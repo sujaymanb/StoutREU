@@ -170,3 +170,4 @@ STDMETHODIMP KinectAudioStream::Clone(__RPC__deref_out_opt IStream **)
 {
     return E_NOTIMPL;
 }
+

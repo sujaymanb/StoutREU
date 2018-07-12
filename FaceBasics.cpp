@@ -679,9 +679,8 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 							float x, y, z;
 							// go to plate, position hard coded for now
 							arm.KinectToArm(bowl_xpos+BOWL_OFFSET_X, bowl_ypos+BOWL_OFFSET_Y, bowl_zpos+BOWL_OFFSET_Z, &x, &y, &z);
-							OutputDebugString(L"test before");
 							arm.MoveArm(x, y, z);
-							OutputDebugString(L"Test after");
+							
 							// pick up food
 							#if TESTING
 							if (mode == ScoopMode)

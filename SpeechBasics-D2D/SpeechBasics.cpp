@@ -62,40 +62,14 @@ CSpeechBasics::~CSpeechBasics()
 /// <param name="nCmdShow">whether to display minimized, maximized, or normally</param>
 int CSpeechBasics::Run(HINSTANCE hInstance, int nCmdShow)
 {
-    MSG       msg = {0};
-    WNDCLASS  wc;
+   
     const int maxEventCount = 2;
     int eventCount = 1;
     HANDLE hEvents[maxEventCount];
 
-    // Dialog custom window class
-    ZeroMemory(&wc, sizeof(wc));
-    wc.style         = CS_HREDRAW | CS_VREDRAW;
-    wc.cbWndExtra    = DLGWINDOWEXTRA;
-    wc.hInstance     = hInstance;
-    wc.hCursor       = LoadCursorW(NULL, IDC_ARROW);
-    wc.hIcon         = LoadIconW(hInstance, MAKEINTRESOURCE(IDI_APP));
-    wc.lpfnWndProc   = DefDlgProcW;
-    wc.lpszClassName = L"SpeechBasicsAppDlgWndClass";
-
-    if (!RegisterClassW(&wc))
-    {
-        return 0;
-    }
-	// Create main application window
-	/*
-	HWND hWndApp = CreateDialogParamW(
-		hInstance,
-		MAKEINTRESOURCE(IDD_APP),
-		NULL,
-		(DLGPROC)CSpeechBasics::MessageRouter,
-		reinterpret_cast<LPARAM>(this));
-		*/
-    // Show window
-    //ShowWindow(hWndApp, nCmdShow);
 	StartKinect();
     // Main message loop
-    while (WM_QUIT != msg.message)
+    while (1)
     {
         if (m_hSpeechEvent != INVALID_HANDLE_VALUE)
         {
@@ -162,16 +136,8 @@ int CSpeechBasics::Run(HINSTANCE hInstance, int nCmdShow)
             }
             break;
         }
-
-        while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
-        {
-
-            TranslateMessage(&msg);
-            DispatchMessageW(&msg);
-        }
     }
-
-    return static_cast<int>(msg.wParam);
+	return 0;
 }
 
 
@@ -217,7 +183,7 @@ HRESULT CSpeechBasics::StartKinect()
 
     if (FAILED(hr))
     {
-        SetStatusMessage(L"Failed opening an audio stream!");
+        OutputDebugString(L"Failed opening an audio stream!");
     }
 
     SafeRelease(pAudioBeamList);
@@ -258,7 +224,7 @@ HRESULT CSpeechBasics::InitializeSpeech()
 
     if (FAILED(hr))
     {
-        SetStatusMessage(L"Could not create speech recognizer. Please ensure that Microsoft Speech SDK and other sample requirements are installed.");
+		OutputDebugString(L"Could not create speech recognizer. Please ensure that Microsoft Speech SDK and other sample requirements are installed.");
         return hr;
     }
 
@@ -266,7 +232,7 @@ HRESULT CSpeechBasics::InitializeSpeech()
 
     if (FAILED(hr))
     {
-        SetStatusMessage(L"Could not load speech grammar. Please ensure that grammar configuration file was properly deployed.");
+		OutputDebugString(L"Could not load speech grammar. Please ensure that grammar configuration file was properly deployed.");
         return hr;
     }
 
@@ -274,7 +240,7 @@ HRESULT CSpeechBasics::InitializeSpeech()
 
     if (FAILED(hr))
     {
-        SetStatusMessage(L"Could not start recognizing speech.");
+        OutputDebugString(L"Could not start recognizing speech.");
         return hr;
     }
 
@@ -464,13 +430,4 @@ Action CSpeechBasics::MapSpeechTagToAction(LPCWSTR pszSpeechTag)
     }
 
     return action;
-}
-
-/// <summary>
-/// Set the status bar message
-/// </summary>
-/// <param name="szMessage">message to display</param>
-void CSpeechBasics::SetStatusMessage(const WCHAR* szMessage)
-{
-    SendDlgItemMessageW(m_hWnd, IDC_STATUS, WM_SETTEXT, 0, (LPARAM)szMessage);
 }
