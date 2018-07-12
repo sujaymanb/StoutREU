@@ -9,6 +9,7 @@
 #include "resource.h"
 #include "ImageRenderer.h"
 #include "stdafx.h"
+#include "JacoArm.h"
 #define TESTING 1
 
 #define BOWL_OFFSET_X -.1
@@ -18,7 +19,6 @@
 #define MOUTH_OFFSET_X 0
 #define MOUTH_OFFSET_Y .15
 #define MOUTH_OFFSET_Z -.2
-
 
 enum EatingMode
 {
@@ -76,38 +76,12 @@ public:
     /// </summary>
     /// <param name="hInstance"></param>
     /// <param name="nCmdShow"></param>
-    int                    Run(HINSTANCE hInstance, int nCmdShow);
+    int                    Run(HINSTANCE hInstance, int nCmdShow, JacoArm& arm);
 
-	/// <summary>
-	/// Check if arm is moving
-	/// </summary>
-	bool                   ArmMoving(float newX, float newY, float newZ, float oldX, float oldY, float oldZ);
+	
 
 private:
-	/// <summary>
-	/// map kinect coords to arm command
-	/// </summary>
-	void KinectToArm(float kx, float ky, float kz, float* x, float* y, float* z);
-
-	/// <summary>
-	/// Wait for arm to stop moving
-	/// </summary>
-	int WaitForArmMove(float goalX, float goalY, float goalZ);
-
-	/// <summary>
-	/// Move arm to given coordinates
-	/// </summary>
-	int MoveArm(float x, float y, float z);
-
-	/// <summary>
-	/// Pick up food in scoop style
-	/// </summary>
-	int Scoop();
-
-	/// <summary>
-	/// Pick up food in soup style
-	/// </summary>
-	int Soup();
+	
 
 	/// <summary>
 	/// Get the goal position
@@ -117,7 +91,7 @@ private:
     /// <summary>
     /// Main processing function
     /// </summary>
-    void                   Update();
+    void                   Update(JacoArm& arm);
 
     /// <summary>
     /// Initializes the default Kinect sensor
@@ -132,12 +106,12 @@ private:
     /// <param name="pBuffer">pointer to frame data</param>
     /// <param name="nWidth">width (in pixels) of input image data</param>
     /// <param name="nHeight">height (in pixels) of input image data</param>
-    void                   DrawStreams(INT64 nTime, RGBQUAD* pBuffer, int nWidth, int nHeight);
+    void                   DrawStreams(INT64 nTime, RGBQUAD* pBuffer, int nWidth, int nHeight, JacoArm& arm);
 
     /// <summary>
     /// Processes new face frames
     /// </summary>
-    void                   ProcessFaces();
+    void                   ProcessFaces(JacoArm& arm);
 
     /// <summary>
     /// Computes the face result text layout position by adding an offset to the corresponding 
@@ -198,11 +172,6 @@ private:
 	int					   mouthOpenCounter[BODY_COUNT];
 	int					   eyesClosedCounter[BODY_COUNT];
 
-	// offsets
-	float				   x_offset; // = -0.4826;
-	float				   y_offset; // = 0.1397;
-	float				   z_offset; // = 0.635;
-	
 	float				   bowl_xpos;
 	float				   bowl_ypos;
 	float				   bowl_zpos;

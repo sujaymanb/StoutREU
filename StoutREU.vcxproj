@@ -22,8 +22,9 @@
     <ClCompile Include="ArTracker.cpp" />
     <ClCompile Include="FaceBasics.cpp" />
     <ClCompile Include="ImageRenderer.cpp" />
+    <ClCompile Include="JacoArm.cpp" />
     <ClCompile Include="MealRobot.cpp" />
-    <ClCompile Include="Source2.cpp" />
+    <ClCompile Include="Runner.cpp" />
     <ClCompile Include="SpeechBasics-D2D\KinectAudioStream.cpp" />
     <ClCompile Include="SpeechBasics-D2D\SpeechBasics.cpp" />
   </ItemGroup>
@@ -37,6 +38,7 @@
     <ClInclude Include="CommunicationLayerWindows.h" />
     <ClInclude Include="FaceBasics.h" />
     <ClInclude Include="ImageRenderer.h" />
+    <ClInclude Include="JacoArm.h" />
     <ClInclude Include="KinovaTypes.h" />
     <ClInclude Include="MealRobot.h" />
     <ClInclude Include="resource.h" />

@@ -16,6 +16,7 @@
 #include "CommandLayer.h"
 #include <conio.h>
 #include "KinovaTypes.h"
+#include "JacoArm.h"
 
 // other
 #include <iostream>
@@ -24,23 +25,7 @@
 #include <conio.h>
 #include <cstdlib>
 
-	
-// Kinova API init
 
-// A handle to the API.
-HINSTANCE commandLayer_handle;
-
-// Function pointers to the functions we need
-int(*MyInitAPI)();
-int(*MyCloseAPI)();
-int(*MySendBasicTrajectory)(TrajectoryPoint command);
-int(*MySendAdvanceTrajectory)(TrajectoryPoint command);
-int(*MyGetDevices)(KinovaDevice devices[MAX_KINOVA_DEVICE], int &result);
-int(*MySetActiveDevice)(KinovaDevice device);
-int(*MyMoveHome)();
-int(*MyInitFingers)();
-int(*MyGetCartesianCommand)(CartesianPosition &);
-int(*MyEraseAllTrajectories)();
 
 // face property text layout offset in X axis
 static const float c_FaceTextLayoutOffsetX = -0.1f;
@@ -80,20 +65,9 @@ CFaceBasics::CFaceBasics() :
     m_pColorRGBX(nullptr),
     m_pBodyFrameReader(nullptr)	
 {
-
-	x_offset = -armVec[0];
-	y_offset = -armVec[1];
-	z_offset = armVec[2];
-
 	bowl_xpos = -bowlVec[0];
 	bowl_ypos = -bowlVec[1];
 	bowl_zpos = bowlVec[2];
-
-	std::wstringstream s;
-	s << L"\nMouth offset x: " << x_offset << "\n" << "Mouth offset y: " << y_offset << "\n" << "Mouth offset z: " << z_offset << "\n";
-	std::wstring ws = s.str();
-	LPCWSTR l = ws.c_str();
-	OutputDebugString(l);
 
     LARGE_INTEGER qpf = {0};
     if (QueryPerformanceFrequency(&qpf))
@@ -115,59 +89,6 @@ CFaceBasics::CFaceBasics() :
 	int mouthOpenCounter[BODY_COUNT] = { 0 };
 	int eyesClosedCounter[BODY_COUNT] = { 0 };
 
-	//We load the API.
-	commandLayer_handle = LoadLibrary(L"CommandLayerWindows.dll");
-	int programResult = 0;
-
-	//We load the functions from the library (Under Windows, use GetProcAddress)
-	MyInitAPI = (int(*)()) GetProcAddress(commandLayer_handle, "InitAPI");
-	MyCloseAPI = (int(*)()) GetProcAddress(commandLayer_handle, "CloseAPI");
-	MyMoveHome = (int(*)()) GetProcAddress(commandLayer_handle, "MoveHome");
-	MyInitFingers = (int(*)()) GetProcAddress(commandLayer_handle, "InitFingers");
-	MyGetDevices = (int(*)(KinovaDevice devices[MAX_KINOVA_DEVICE], int &result)) GetProcAddress(commandLayer_handle, "GetDevices");
-	MySetActiveDevice = (int(*)(KinovaDevice devices)) GetProcAddress(commandLayer_handle, "SetActiveDevice");
-	MySendBasicTrajectory = (int(*)(TrajectoryPoint)) GetProcAddress(commandLayer_handle, "SendBasicTrajectory");
-	MySendAdvanceTrajectory = (int(*)(TrajectoryPoint)) GetProcAddress(commandLayer_handle, "SendAdvanceTrajectory");
-	MyGetCartesianCommand = (int(*)(CartesianPosition &)) GetProcAddress(commandLayer_handle, "GetCartesianCommand");
-	MyEraseAllTrajectories = (int(*)()) GetProcAddress(commandLayer_handle, "EraseAllTrajectories");
-
-	//Verify that all functions has been loaded correctly
-	if ((MyInitAPI == NULL) || (MyCloseAPI == NULL) || (MySendBasicTrajectory == NULL) ||
-		(MyGetDevices == NULL) || (MySetActiveDevice == NULL) || (MyGetCartesianCommand == NULL) ||
-		(MyMoveHome == NULL) || (MyInitFingers == NULL))
-
-	{
-		OutputDebugString(L"FaceBasics.cpp: Error During Arm Initialization\n");
-		programResult = 0;
-	}
-	else
-	{
-		int result = (*MyInitAPI)();
-
-		KinovaDevice list[MAX_KINOVA_DEVICE];
-
-		int devicesCount = MyGetDevices(list, result);
-
-		if (devicesCount < 1)
-		{
-			OutputDebugString(L"FaceBasics.cpp: Robot not found \n");
-		}
-		else
-		{
-
-			std::wstringstream s;
-			s << L"FaceBasics.cpp: Found a robot on the USB bus (" << list[0].SerialNumber << ")\n";
-			std::wstring ws = s.str();
-			LPCWSTR l = ws.c_str();
-			OutputDebugString(l);
-
-			//Setting the current device as the active device.
-			MySetActiveDevice(list[0]);
-
-			// Move home
-			MoveArm(.5273, -.4949, .0674);
-		}
-	}
 }
 
 
@@ -216,9 +137,7 @@ CFaceBasics::~CFaceBasics()
 
     SafeRelease(m_pKinectSensor);
 
-	// close arm api
-	int result = (*MyCloseAPI)();
-	FreeLibrary(commandLayer_handle);
+	
 }
 
 /// <summary>
@@ -226,7 +145,7 @@ CFaceBasics::~CFaceBasics()
 /// </summary>
 /// <param name="hInstance">handle to the application instance</param>
 /// <param name="nCmdShow">whether to display minimized, maximized, or normally</param>
-int CFaceBasics::Run(HINSTANCE hInstance, int nCmdShow)
+int CFaceBasics::Run(HINSTANCE hInstance, int nCmdShow, JacoArm& arm)
 {
     MSG       msg = {0};
     WNDCLASS  wc;
@@ -259,7 +178,7 @@ int CFaceBasics::Run(HINSTANCE hInstance, int nCmdShow)
     // Main message loop
     while (WM_QUIT != msg.message)
     {
-        Update();
+        Update(arm);
 
         while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
         {
@@ -429,46 +348,6 @@ HRESULT CFaceBasics::InitializeDefaultSensor()
     return hr;
 }
 
-int CFaceBasics::WaitForArmMove(float goalX, float goalY, float goalZ)
-{
-	int timeout = 0;
-	CartesianPosition current;
-	MyGetCartesianCommand(current);
-	while (ArmMoving(current.Coordinates.X, current.Coordinates.Y, current.Coordinates.Z, goalX, goalY, goalZ))
-	{
-		if (timeout >= 10)
-			break;
-		OutputDebugString(L"FaceBasics.cpp: Arm is moving\n");
-		MyGetCartesianCommand(current);
-		Sleep(1000);
-		timeout++;
-	}
-	OutputDebugString(L"FaceBasics.cpp: Arm is stopped\n");
-	return 0;
-}
-
-bool CFaceBasics::ArmMoving(float newX, float newY, float newZ, float goalX, float goalY, float goalZ)
-{
-	// 0.2 is the goal accuracy tolerance
-	if ((abs(newX - goalX) < 0.1) && (abs(newY - goalY) < 0.1) && (abs(newZ - goalZ) < 0.1))
-	{
-		Sleep(1000);
-		return false;
-	}
-	else
-	{
-#if TESTING 
-		std::wstringstream s;
-		s << L"Current Coords: " << newX << ", " << newY << ", " << newZ << "\n"
-			<< L"Goal Coords: " << goalX << ", " << goalY << ", " << goalZ << "\n";
-		std::wstring ws = s.str();
-		LPCWSTR l = ws.c_str();
-		OutputDebugString(l);
-#endif
-		return true;
-	}
-}
-
 /// <summary>
 /// Get the goal position
 /// </summary>
@@ -502,199 +381,9 @@ HRESULT CFaceBasics::GetMouthPosition(IBody* pBody, CameraSpacePoint* mouthPosit
 }
 
 /// <summary>
-/// Kinect coords to arm coords
-/// </summary>
-void CFaceBasics::KinectToArm(float kx, float ky, float kz, float* x, float* y, float* z)
-{
-	float ax, ay, az;
-	ax = kx - x_offset;
-	ay = ky - y_offset;
-	az = kz - z_offset;
-
-	*x = -az;
-	*y = -ax;
-	*z = ay;
-}
-
-/// <summary>
-/// Move arm to given position
-/// </summary>
-int CFaceBasics::MoveArm(float x, float y, float z)
-{
-	MyEraseAllTrajectories();
-	CartesianPosition currentCommand;
-	TrajectoryPoint pointToSend;
-	pointToSend.InitStruct();
-
-	//We specify that this point will be a Cartesian Position.
-	pointToSend.Position.Type = CARTESIAN_POSITION;
-	pointToSend.LimitationsActive = 0;
-
-	MyGetCartesianCommand(currentCommand);
-
-	float neutral_x, neutral_y, neutral_z;
-	KinectToArm(0.0, .15, 0.1, &neutral_x, &neutral_y, &neutral_z);
-
-	pointToSend.Position.CartesianPosition.X = neutral_x;
-	pointToSend.Position.CartesianPosition.Y = neutral_y;
-	pointToSend.Position.CartesianPosition.Z = neutral_z;
-	pointToSend.Position.CartesianPosition.ThetaX = 1.8796;
-	pointToSend.Position.CartesianPosition.ThetaY = 0.4309;
-	pointToSend.Position.CartesianPosition.ThetaZ = -1.5505;
-	pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
-	pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
-	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
-
-	int result = MySendAdvanceTrajectory(pointToSend);
-	if (result != NO_ERROR_KINOVA)
-	{
-		OutputDebugString(L"Could not send advanced trajectory");
-	}
-	pointToSend.Position.CartesianPosition.X = x;
-	pointToSend.Position.CartesianPosition.Y = y;
-	pointToSend.Position.CartesianPosition.Z = z;
-
-	OutputDebugString(L"Sending the point to the robot.\n");
-	result = MySendAdvanceTrajectory(pointToSend);
-	if (result != NO_ERROR_KINOVA)
-	{
-		OutputDebugString(L"Could not send advanced trajectory");
-	}
-
-	WaitForArmMove(x, y, z);
-	MyEraseAllTrajectories();
-	
-	return 1;
-}
-
-
-/// <summary>
-/// Scoop up food
-/// </summary>
-
-int CFaceBasics::Scoop()
-{
-	MyEraseAllTrajectories();
-	CartesianPosition currentCommand;
-	TrajectoryPoint pointToSend;
-	pointToSend.InitStruct();
-
-	//We specify that this point will be a Cartesian Position.
-	pointToSend.Position.Type = CARTESIAN_POSITION;
-	pointToSend.LimitationsActive = 0;
-
-	MyGetCartesianCommand(currentCommand);
-
-	// dip down and back up for now
-	pointToSend.Position.CartesianPosition.X = currentCommand.Coordinates.X;
-	pointToSend.Position.CartesianPosition.Y = currentCommand.Coordinates.Y;
-	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z - 0.05f;	
-	pointToSend.Position.CartesianPosition.ThetaX = 2.4858;
-	pointToSend.Position.CartesianPosition.ThetaY = 0.3713;
-	pointToSend.Position.CartesianPosition.ThetaZ = -1.5505;
-	pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
-	pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
-	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
-
-	int result = MySendAdvanceTrajectory(pointToSend);
-	if (result != NO_ERROR_KINOVA)
-	{
-		OutputDebugString(L"Could not send advanced trajectory");
-	}
-
-	// scrape
-	pointToSend.Position.CartesianPosition.Y = currentCommand.Coordinates.Y - 0.06f;
-	result = MySendAdvanceTrajectory(pointToSend);
-	if (result != NO_ERROR_KINOVA)
-	{
-		OutputDebugString(L"Could not send advanced trajectory");
-	}
-
-	// back up
-	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z;
-	pointToSend.Position.CartesianPosition.ThetaX = 1.8796;
-	pointToSend.Position.CartesianPosition.ThetaY = 0.4309;
-	pointToSend.Position.CartesianPosition.ThetaZ = -1.5505;
-	result = MySendAdvanceTrajectory(pointToSend);
-	if (result != NO_ERROR_KINOVA)
-	{
-		OutputDebugString(L"Could not send advanced trajectory");
-	}
-
-	Sleep(3000);
-	MyEraseAllTrajectories();
-
-	return 1;
-}
-
-int CFaceBasics::Soup()
-{
-	MyEraseAllTrajectories();
-	CartesianPosition currentCommand;
-	TrajectoryPoint pointToSend;
-	pointToSend.InitStruct();
-
-	//We specify that this point will be a Cartesian Position.
-	pointToSend.Position.Type = CARTESIAN_POSITION;
-	pointToSend.LimitationsActive = 0;
-
-	MyGetCartesianCommand(currentCommand);
-
-
-	pointToSend.Position.CartesianPosition.X = currentCommand.Coordinates.X;	
-	pointToSend.Position.CartesianPosition.Y = currentCommand.Coordinates.Y;
-	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z - 0.08f;
-	pointToSend.Position.CartesianPosition.ThetaX = currentCommand.Coordinates.ThetaX;
-	pointToSend.Position.CartesianPosition.ThetaY = currentCommand.Coordinates.ThetaY;
-	pointToSend.Position.CartesianPosition.ThetaZ = currentCommand.Coordinates.ThetaZ;
-	pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
-	pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
-	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
-
-	int result = MySendAdvanceTrajectory(pointToSend);
-
-	Sleep(1000);
-	if (result != NO_ERROR_KINOVA)
-	{
-		OutputDebugString(L"Could not send advanced trajectory");
-	}
-
-	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z;
-
-	result = MySendAdvanceTrajectory(pointToSend);
-	if (result != NO_ERROR_KINOVA)
-	{
-		OutputDebugString(L"Could not send advanced trajectory");
-	}
-
-	Sleep(1000);
-	pointToSend.Position.CartesianPosition.ThetaZ = -1.2264;
-
-	result = MySendAdvanceTrajectory(pointToSend);
-	if (result != NO_ERROR_KINOVA)
-	{
-		OutputDebugString(L"Could not send advanced trajectory");
-	}
-
-	Sleep(1000);
-	pointToSend.Position.CartesianPosition.ThetaZ = currentCommand.Coordinates.ThetaZ;
-
-	result = MySendAdvanceTrajectory(pointToSend);
-	if (result != NO_ERROR_KINOVA)
-	{
-		OutputDebugString(L"Could not send advanced trajectory");
-	}
-
-	Sleep(3000);
-	MyEraseAllTrajectories();
-
-	return 1;
-}
-
-/// <summary>
 /// Main processing function
 /// </summary>
-void CFaceBasics::Update()
+void CFaceBasics::Update(JacoArm& arm)
 {
     if (!m_pColorFrameReader || !m_pBodyFrameReader)
     {
@@ -756,7 +445,7 @@ void CFaceBasics::Update()
 
         if (SUCCEEDED(hr))
         {
-            DrawStreams(nTime, pBuffer, nWidth, nHeight);
+            DrawStreams(nTime, pBuffer, nWidth, nHeight, arm);
         }
 
         SafeRelease(pFrameDescription);		
@@ -772,7 +461,7 @@ void CFaceBasics::Update()
 /// <param name="pBuffer">pointer to frame data</param>
 /// <param name="nWidth">width (in pixels) of input image data</param>
 /// <param name="nHeight">height (in pixels) of input image data</param>
-void CFaceBasics::DrawStreams(INT64 nTime, RGBQUAD* pBuffer, int nWidth, int nHeight)
+void CFaceBasics::DrawStreams(INT64 nTime, RGBQUAD* pBuffer, int nWidth, int nHeight, JacoArm& arm)
 {
     if (m_hWnd)
     {
@@ -796,7 +485,7 @@ void CFaceBasics::DrawStreams(INT64 nTime, RGBQUAD* pBuffer, int nWidth, int nHe
             if (SUCCEEDED(hr))
             {
                 // begin processing the face frames
-                ProcessFaces();				
+                ProcessFaces(arm);				
             }
 
             m_pDrawDataStreams->EndDrawing();
@@ -836,7 +525,7 @@ void CFaceBasics::DrawStreams(INT64 nTime, RGBQUAD* pBuffer, int nWidth, int nHe
 /// <summary>
 /// Processes new face frames
 /// </summary>
-void CFaceBasics::ProcessFaces()
+void CFaceBasics::ProcessFaces(JacoArm& arm)
 {
 	HRESULT hr;
 	IBody* ppBodies[BODY_COUNT] = { 0 };
@@ -989,19 +678,20 @@ void CFaceBasics::ProcessFaces()
 						{
 							float x, y, z;
 							// go to plate, position hard coded for now
-							KinectToArm(bowl_xpos+BOWL_OFFSET_X, bowl_ypos+BOWL_OFFSET_Y, bowl_zpos+BOWL_OFFSET_Z, &x, &y, &z);
-							MoveArm(x, y, z);
-
+							arm.KinectToArm(bowl_xpos+BOWL_OFFSET_X, bowl_ypos+BOWL_OFFSET_Y, bowl_zpos+BOWL_OFFSET_Z, &x, &y, &z);
+							OutputDebugString(L"test before");
+							arm.MoveArm(x, y, z);
+							OutputDebugString(L"Test after");
 							// pick up food
 							#if TESTING
 							if (mode == ScoopMode)
 							{
-								Scoop();
+								arm.Scoop();
 								OutputDebugString(L"\nIn Scoop Mode\n");
 							}
 							else if (mode == SoupMode)
 							{
-								Soup();
+								arm.Soup();
 								OutputDebugString(L"\nIn Soup Mode\n");
 							}
 							else if (mode == DrinkMode)
@@ -1037,10 +727,10 @@ void CFaceBasics::ProcessFaces()
 							// using dummy coordinates for now					
 							int armResult;
 							float x, y, z;
-							KinectToArm(mouthPoints[iFace].X, mouthPoints[iFace].Y, mouthPoints[iFace].Z, &x, &y, &z);
+							arm.KinectToArm(mouthPoints[iFace].X, mouthPoints[iFace].Y, mouthPoints[iFace].Z, &x, &y, &z);
 							//armResult = MoveArm(0.3248, 0.45, 0.1672);
 
-							armResult = MoveArm(x, y, z);
+							armResult = arm.MoveArm(x, y, z);
 				
 							armState = WaitForEyesClosed;
 						}
