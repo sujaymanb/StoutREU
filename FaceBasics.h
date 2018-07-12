@@ -11,6 +11,15 @@
 #include "stdafx.h"
 #define TESTING 1
 
+#define BOWL_OFFSET_X -.1
+#define BOWL_OFFSET_Y .2
+#define BOWL_OFFSET_Z .1
+
+#define MOUTH_OFFSET_X 0
+#define MOUTH_OFFSET_Y .15
+#define MOUTH_OFFSET_Z -.2
+
+
 enum EatingMode
 {
 	SoupMode,
@@ -193,10 +202,7 @@ private:
 	float				   x_offset; // = -0.4826;
 	float				   y_offset; // = 0.1397;
 	float				   z_offset; // = 0.635;
-	float				   mouth_offsetX = 0.05; // was -.10
-	float				   mouth_offsetY = 0.05; // -.07
- 	float				   mouth_offsetZ = -0.2; // was .02
-
+	
 	float				   bowl_xpos;
 	float				   bowl_ypos;
 	float				   bowl_zpos;
