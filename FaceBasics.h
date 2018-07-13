@@ -13,7 +13,7 @@
 #define TESTING 1
 
 #define BOWL_OFFSET_X -.1
-#define BOWL_OFFSET_Y .2
+#define BOWL_OFFSET_Y .25
 #define BOWL_OFFSET_Z .1
 
 #define MOUTH_OFFSET_X 0
@@ -171,9 +171,5 @@ private:
 	// counters
 	int					   mouthOpenCounter[BODY_COUNT];
 	int					   eyesClosedCounter[BODY_COUNT];
-
-	float				   bowl_xpos;
-	float				   bowl_ypos;
-	float				   bowl_zpos;
 };
 

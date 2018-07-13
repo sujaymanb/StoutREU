@@ -44,6 +44,16 @@ JacoArm::JacoArm(cv::Vec3d armVec)
 	LPCWSTR l = ws.c_str();
 	OutputDebugString(l);
 
+	bowl_xpos = -bowlVec[0];
+	bowl_ypos = -bowlVec[1];
+	bowl_zpos = bowlVec[2];
+
+	std::wstringstream s1;
+	s1 << L"\nbowl offset x: " << bowl_xpos << "\n" << "bowl offset y: " << bowl_ypos << "\n" << "bowl offset z: " << bowl_zpos << "\n";
+	std::wstring ws1 = s1.str();
+	LPCWSTR m = ws1.c_str();
+	OutputDebugString(m);
+
 	//We load the API.
 	commandLayer_handle = LoadLibrary(L"CommandLayerWindows.dll");
 	int programResult = 0;
@@ -95,7 +105,7 @@ JacoArm::JacoArm(cv::Vec3d armVec)
 
 			Sleep(1000);
 			// Move home
-			MoveArm(.5273, -.4949, .0674);
+			MoveToNeutralPosition();
 		}
 	}
 }
@@ -106,12 +116,10 @@ JacoArm::~JacoArm()
 	int result = (*MyCloseAPI)();
 	FreeLibrary(commandLayer_handle);
 }
-/// <summary>
-/// Move arm to given position
-/// </summary>
-int JacoArm::MoveArm(float x, float y, float z)
+
+int JacoArm::MoveToNeutralPosition()
 {
- 	MyEraseAllTrajectories();
+	MyEraseAllTrajectories();
 	CartesianPosition currentCommand;
 	TrajectoryPoint pointToSend;
 	pointToSend.InitStruct();
@@ -121,10 +129,11 @@ int JacoArm::MoveArm(float x, float y, float z)
 	pointToSend.LimitationsActive = 0;
 
 	MyGetCartesianCommand(currentCommand);
-	
+
 	float neutral_x, neutral_y, neutral_z;
-	
-	KinectToArm(0.0, .15, 0.1, &neutral_x, &neutral_y, &neutral_z);
+	float y_offset_bowl = .4;
+
+	KinectToArm(bowl_xpos, (bowl_ypos + y_offset_bowl), bowl_zpos, &neutral_x, &neutral_y, &neutral_z);
 
 	pointToSend.Position.CartesianPosition.X = neutral_x;
 	pointToSend.Position.CartesianPosition.Y = neutral_y;
@@ -141,13 +150,40 @@ int JacoArm::MoveArm(float x, float y, float z)
 	{
 		OutputDebugString(L"Could not send advanced trajectory");
 	}
-	
+	return result;
+}
+
+
+/// <summary>
+/// Move arm to given position
+/// </summary>
+int JacoArm::MoveArm(float x, float y, float z)
+{
+	MoveToNeutralPosition();
+
+ 	MyEraseAllTrajectories();
+	CartesianPosition currentCommand;
+	TrajectoryPoint pointToSend;
+	pointToSend.InitStruct();
+
+	//We specify that this point will be a Cartesian Position.
+	pointToSend.Position.Type = CARTESIAN_POSITION;
+	pointToSend.LimitationsActive = 0;
+
+	MyGetCartesianCommand(currentCommand);
+
 	pointToSend.Position.CartesianPosition.X = x;
 	pointToSend.Position.CartesianPosition.Y = y;
 	pointToSend.Position.CartesianPosition.Z = z;
-
+	pointToSend.Position.CartesianPosition.ThetaX = 1.8796;
+	pointToSend.Position.CartesianPosition.ThetaY = 0.4309;
+	pointToSend.Position.CartesianPosition.ThetaZ = -1.5505;
+	pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
+	pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
+	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
+	
 	OutputDebugString(L"Sending the point to the robot.\n");
-	result = MySendAdvanceTrajectory(pointToSend);
+	int result = MySendAdvanceTrajectory(pointToSend);
 	if (result != NO_ERROR_KINOVA)
 	{
 		OutputDebugString(L"Could not send advanced trajectory");

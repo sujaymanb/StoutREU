@@ -65,9 +65,6 @@ CFaceBasics::CFaceBasics() :
     m_pColorRGBX(nullptr),
     m_pBodyFrameReader(nullptr)	
 {
-	bowl_xpos = -bowlVec[0];
-	bowl_ypos = -bowlVec[1];
-	bowl_zpos = bowlVec[2];
 
     LARGE_INTEGER qpf = {0};
     if (QueryPerformanceFrequency(&qpf))
@@ -678,7 +675,7 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 						{
 							float x, y, z;
 							// go to plate, position hard coded for now
-							arm.KinectToArm(bowl_xpos+BOWL_OFFSET_X, bowl_ypos+BOWL_OFFSET_Y, bowl_zpos+BOWL_OFFSET_Z, &x, &y, &z);
+							arm.KinectToArm(arm.bowl_xpos+BOWL_OFFSET_X, arm.bowl_ypos+BOWL_OFFSET_Y, arm.bowl_zpos+BOWL_OFFSET_Z, &x, &y, &z);
 							arm.MoveArm(x, y, z);
 							
 							// pick up food
