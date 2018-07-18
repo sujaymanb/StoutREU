@@ -34,7 +34,7 @@ ArTracker::ArTracker()
 
 	// init camera
 	cameraMatrix = Mat::eye(3, 3, CV_64F);
-	loadCameraCalibration("Calibration");
+	loadCameraCalibration("TestKinectCalib");
 }
 
 ArTracker::~ArTracker()
