@@ -38,6 +38,13 @@
 	  <item> scoops </item>
         </one-of>
       </item>
+      <item>
+	<tag>STOP</tag>
+        <one-of>
+          <item> stop </item>
+	  <item> exit </item>
+        </one-of>
+      </item>	
     </one-of>
   </rule>
 </grammar>

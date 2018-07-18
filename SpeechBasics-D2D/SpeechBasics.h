@@ -30,6 +30,7 @@ enum Action
 	ActionBowl,
 	ActionSoup,
 	ActionScoop,
+	ActionStop,
 	ActionNone
 };
 

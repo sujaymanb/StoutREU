@@ -414,7 +414,8 @@ Action CSpeechBasics::MapSpeechTagToAction(LPCWSTR pszSpeechTag)
         {L"FOOD", ActionFood},
         {L"BOWL", ActionBowl},
 		{L"SOUP", ActionSoup},
-		{L"SCOOP", ActionScoop}
+		{L"SCOOP", ActionScoop},
+		{L"STOP", ActionStop}
     };
 
 	
