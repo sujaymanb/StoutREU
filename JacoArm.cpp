@@ -8,6 +8,7 @@
 #include "CommandLayer.h"
 #include <conio.h>
 #include "KinovaTypes.h"
+#include "SpeechBasics-D2D/SpeechBasics.h"
 
 // other
 #include <iostream>
@@ -105,6 +106,7 @@ JacoArm::JacoArm(cv::Vec3d armVec)
 
 			Sleep(1000);
 			// Move home
+			//MyMoveHome();
 			MoveToNeutralPosition();
 		}
 	}
@@ -146,6 +148,7 @@ int JacoArm::MoveToNeutralPosition()
 	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
 
 	int result = MySendAdvanceTrajectory(pointToSend);
+	WaitForArmMove(neutral_x, neutral_y, neutral_z);
 	if (result != NO_ERROR_KINOVA)
 	{
 		OutputDebugString(L"Could not send advanced trajectory");
@@ -202,6 +205,11 @@ int JacoArm::MoveArm(float x, float y, float z)
 
 int JacoArm::Scoop()
 {
+	if (ActionsForJaco == ActionStop)
+	{
+		return 0;
+	}
+
 	MyEraseAllTrajectories();
 	CartesianPosition currentCommand;
 	TrajectoryPoint pointToSend;
@@ -257,6 +265,11 @@ int JacoArm::Scoop()
 
 int JacoArm::Soup()
 {
+	if (ActionsForJaco == ActionStop)
+	{
+		return 0;
+	}
+
 	MyEraseAllTrajectories();
 	CartesianPosition currentCommand;
 	TrajectoryPoint pointToSend;
@@ -327,8 +340,18 @@ int JacoArm::WaitForArmMove(float goalX, float goalY, float goalZ)
 	MyGetCartesianCommand(current);
 	while (ArmMoving(current.Coordinates.X, current.Coordinates.Y, current.Coordinates.Z, goalX, goalY, goalZ))
 	{
-		if (timeout >= 10)
+		if (ActionsForJaco == ActionStop)
+		{
+			OutputDebugString(L"We stoppin");
+			MyEraseAllTrajectories();
 			break;
+		}
+
+		if (timeout >= 10)
+		{
+			break;
+		}
+
 		OutputDebugString(L"FaceBasics.cpp: Arm is moving\n");
 		MyGetCartesianCommand(current);
 		Sleep(1000);
@@ -340,7 +363,7 @@ int JacoArm::WaitForArmMove(float goalX, float goalY, float goalZ)
 
 bool JacoArm::ArmMoving(float newX, float newY, float newZ, float goalX, float goalY, float goalZ)
 {
-	// 0.2 is the goal accuracy tolerance
+	// 0.1 is the goal accuracy tolerance
 	if ((abs(newX - goalX) < 0.1) && (abs(newY - goalY) < 0.1) && (abs(newZ - goalZ) < 0.1))
 	{
 		Sleep(1000);

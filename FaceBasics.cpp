@@ -625,6 +625,9 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 						case ActionSoup:
 							OutputDebugString(L"Soup\n");
 							break;
+						case ActionStop:
+							OutputDebugString(L"Stop\n");
+							break;
 						}
 						#endif			
 
