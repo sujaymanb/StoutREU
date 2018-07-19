@@ -14,7 +14,7 @@ public:
 	/// <summary>
 	/// Wait for arm to stop moving
 	/// </summary>
-	int WaitForArmMove(float goalX, float goalY, float goalZ);
+	int WaitForArmMove();
 
 	/// <summary>
 	/// Move arm to given coordinates
@@ -35,11 +35,6 @@ public:
 	/// Pick up food in soup style
 	/// </summary>
 	int Soup();
-
-	/// <summary>
-	/// Check if arm is moving
-	/// </summary>
-	bool ArmMoving(float newX, float newY, float newZ, float oldX, float oldY, float oldZ);
 
 	/// <summary>
 	/// map kinect coords to arm command

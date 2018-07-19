@@ -32,6 +32,7 @@ int(*MyMoveHome)();
 int(*MyInitFingers)();
 int(*MyGetCartesianCommand)(CartesianPosition &);
 int(*MyEraseAllTrajectories)();
+int(*MyGetGlobalTrajectoryInfo)(TrajectoryFIFO &);
 
 JacoArm::JacoArm(cv::Vec3d armVec) 
 {
@@ -70,6 +71,7 @@ JacoArm::JacoArm(cv::Vec3d armVec)
 	MySendAdvanceTrajectory = (int(*)(TrajectoryPoint)) GetProcAddress(commandLayer_handle, "SendAdvanceTrajectory");
 	MyGetCartesianCommand = (int(*)(CartesianPosition &)) GetProcAddress(commandLayer_handle, "GetCartesianCommand");
 	MyEraseAllTrajectories = (int(*)()) GetProcAddress(commandLayer_handle, "EraseAllTrajectories");
+	MyGetGlobalTrajectoryInfo = (int(*)(TrajectoryFIFO &)) GetProcAddress(commandLayer_handle, "GetGlobalTrajectoryInfo");
 
 	//Verify that all functions has been loaded correctly
 	if ((MyInitAPI == NULL) || (MyCloseAPI == NULL) || (MySendBasicTrajectory == NULL) ||
@@ -148,7 +150,7 @@ int JacoArm::MoveToNeutralPosition()
 	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
 
 	int result = MySendAdvanceTrajectory(pointToSend);
-	WaitForArmMove(neutral_x, neutral_y, neutral_z);
+	WaitForArmMove();
 	if (result != NO_ERROR_KINOVA)
 	{
 		OutputDebugString(L"Could not send advanced trajectory");
@@ -192,7 +194,7 @@ int JacoArm::MoveArm(float x, float y, float z)
 		OutputDebugString(L"Could not send advanced trajectory");
 	}
 
-	WaitForArmMove(x, y, z);
+	WaitForArmMove();
 	MyEraseAllTrajectories();
 
 	return 1;
@@ -237,6 +239,7 @@ int JacoArm::Scoop()
 	{
 		OutputDebugString(L"Could not send advanced trajectory");
 	}
+	WaitForArmMove();
 
 	// scrape
 	pointToSend.Position.CartesianPosition.Y = currentCommand.Coordinates.Y - 0.06f;
@@ -245,6 +248,7 @@ int JacoArm::Scoop()
 	{
 		OutputDebugString(L"Could not send advanced trajectory");
 	}
+	WaitForArmMove();
 
 	// back up
 	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z;
@@ -257,7 +261,7 @@ int JacoArm::Scoop()
 		OutputDebugString(L"Could not send advanced trajectory");
 	}
 
-	Sleep(3000);
+	WaitForArmMove();
 	MyEraseAllTrajectories();
 
 	return 1;
@@ -293,12 +297,11 @@ int JacoArm::Soup()
 	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
 
 	int result = MySendAdvanceTrajectory(pointToSend);
-
-	Sleep(1000);
 	if (result != NO_ERROR_KINOVA)
 	{
 		OutputDebugString(L"Could not send advanced trajectory");
 	}
+	WaitForArmMove();
 
 	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z;
 
@@ -307,38 +310,35 @@ int JacoArm::Soup()
 	{
 		OutputDebugString(L"Could not send advanced trajectory");
 	}
-
-	Sleep(1000);
 	pointToSend.Position.CartesianPosition.ThetaZ = -1.2264;
+	WaitForArmMove();
 
 	result = MySendAdvanceTrajectory(pointToSend);
 	if (result != NO_ERROR_KINOVA)
 	{
 		OutputDebugString(L"Could not send advanced trajectory");
 	}
-
-	Sleep(1000);
 	pointToSend.Position.CartesianPosition.ThetaZ = currentCommand.Coordinates.ThetaZ;
+	WaitForArmMove();
 
 	result = MySendAdvanceTrajectory(pointToSend);
 	if (result != NO_ERROR_KINOVA)
 	{
 		OutputDebugString(L"Could not send advanced trajectory");
 	}
-
-	Sleep(3000);
+	WaitForArmMove();
 	MyEraseAllTrajectories();
 
 	return 1;
 }
 
 
-int JacoArm::WaitForArmMove(float goalX, float goalY, float goalZ)
+int JacoArm::WaitForArmMove()
 {
 	int timeout = 0;
-	CartesianPosition current;
-	MyGetCartesianCommand(current);
-	while (ArmMoving(current.Coordinates.X, current.Coordinates.Y, current.Coordinates.Z, goalX, goalY, goalZ))
+	TrajectoryFIFO poses_buffer;
+	MyGetGlobalTrajectoryInfo(poses_buffer);
+	while (poses_buffer.TrajectoryCount > 0)
 	{
 		if (ActionsForJaco == ActionStop)
 		{
@@ -347,40 +347,18 @@ int JacoArm::WaitForArmMove(float goalX, float goalY, float goalZ)
 			break;
 		}
 
-		if (timeout >= 10)
+		if (timeout >= 40)
 		{
 			break;
 		}
 
 		OutputDebugString(L"FaceBasics.cpp: Arm is moving\n");
-		MyGetCartesianCommand(current);
-		Sleep(1000);
+		MyGetGlobalTrajectoryInfo(poses_buffer);
+		Sleep(250);
 		timeout++;
 	}
 	OutputDebugString(L"FaceBasics.cpp: Arm is stopped\n");
 	return 0;
-}
-
-bool JacoArm::ArmMoving(float newX, float newY, float newZ, float goalX, float goalY, float goalZ)
-{
-	// 0.1 is the goal accuracy tolerance
-	if ((abs(newX - goalX) < 0.1) && (abs(newY - goalY) < 0.1) && (abs(newZ - goalZ) < 0.1))
-	{
-		Sleep(1000);
-		return false;
-	}
-	else
-	{
-#if TESTING 
-		std::wstringstream s;
-		s << L"Current Coords: " << newX << ", " << newY << ", " << newZ << "\n"
-			<< L"Goal Coords: " << goalX << ", " << goalY << ", " << goalZ << "\n";
-		std::wstring ws = s.str();
-		LPCWSTR l = ws.c_str();
-		OutputDebugString(l);
-#endif
-		return true;
-	}
 }
 
 /// <summary>
