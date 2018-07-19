@@ -31,6 +31,7 @@ enum Action
 	ActionSoup,
 	ActionScoop,
 	ActionStop,
+	ActionReset,
 	ActionNone
 };
 

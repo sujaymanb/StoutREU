@@ -628,7 +628,12 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 						case ActionStop:
 							OutputDebugString(L"Stop\n");
 							break;
+						case ActionReset:
+							OutputDebugString(L"Reset\n");
+							break;
 						}
+						
+					}
 						#endif			
 
 						if (ActionsForJaco == ActionScoop)

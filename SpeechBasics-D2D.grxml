@@ -44,6 +44,13 @@
           <item> stop </item>
 	  <item> exit </item>
         </one-of>
+      </item>
+      <item>
+	<tag>RESET</tag>
+        <one-of>
+          <item> reset </item>
+	  <item> go </item>
+        </one-of>
       </item>	
     </one-of>
   </rule>
