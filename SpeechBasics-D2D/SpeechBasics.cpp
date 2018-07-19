@@ -376,11 +376,15 @@ void CSpeechBasics::ProcessSpeech()
                         const SPPHRASEPROPERTY* pSemanticTag = pPhrase->pProperties->pFirstChild;
                         if (pSemanticTag->SREngineConfidence > ConfidenceThreshold)
                         {
-                            Action tempAction = MapSpeechTagToAction(pSemanticTag->pszValue);
-							if (tempAction != ActionNone)
+                            Action newAction = MapSpeechTagToAction(pSemanticTag->pszValue);
+
+							if ((newAction != ActionNone) 
+								|| (ActionsForJaco != ActionStop)
+								|| (ActionsForJaco == ActionStop && newAction == ActionReset))
 							{
-								ActionsForJaco = tempAction;
+								ActionsForJaco = newAction;
 							}
+
                         }
                     }
                     ::CoTaskMemFree(pPhrase);

@@ -1,6 +1,14 @@
 #pragma once
 
 #include "opencv2/core.hpp"
+
+// Kinova Includes
+#include "CommunicationLayerWindows.h"
+#include "CommandLayer.h"
+#include <conio.h>
+#include "KinovaTypes.h"
+
+
 extern cv::Vec3d armVec, bowlVec; 
 class JacoArm
 {
@@ -40,6 +48,11 @@ public:
 	/// map kinect coords to arm command
 	/// </summary>
 	void KinectToArm(float kx, float ky, float kz, float* x, float* y, float* z);
+
+	/// <summary>
+	/// sends a point returns false if it doesn't send or is stopped
+	/// </summary>
+	int SendPoint(TrajectoryPoint pointToSend);
 
 	float				   bowl_xpos;
 	float				   bowl_ypos;

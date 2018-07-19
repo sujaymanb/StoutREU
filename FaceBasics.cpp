@@ -4,6 +4,7 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+
 #include "stdafx.h"
 #include <strsafe.h>
 #include "resource.h"
@@ -158,7 +159,7 @@ int CFaceBasics::Run(HINSTANCE hInstance, int nCmdShow, JacoArm& arm)
 
     if (!RegisterClassW(&wc))
     {
-        return 0;
+        return FAILURE;
     }
 
     // Create main application window
@@ -220,7 +221,7 @@ LRESULT CALLBACK CFaceBasics::MessageRouter(HWND hWnd, UINT uMsg, WPARAM wParam,
         return pThis->DlgProc(hWnd, uMsg, wParam, lParam);
     }
 
-    return 0;
+    return FAILURE;
 }
 
 /// <summary>
@@ -632,8 +633,7 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 							OutputDebugString(L"Reset\n");
 							break;
 						}
-						
-					}
+		
 						#endif			
 
 						if (ActionsForJaco == ActionScoop)
@@ -649,9 +649,12 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 							mode = DrinkMode;
 						}
 						
-
-						//state stuff start 
-						if (armState == WaitForEyesClosed)
+						if (ActionsForJaco == ActionStop)
+						{
+							armState = StopAllMovement;
+						}
+						
+						if (armState == WaitForEyesClosed )
 						{
 
 							// If min face and if one of the following is true:
@@ -664,12 +667,11 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 								eyesClosedCounter[iFace]++;
 								if (eyesClosedCounter[iFace] >= 20 || ActionsForJaco == ActionBowl)
 								{
-									// Make this an enum
 									eyesClosedCounter[iFace] = 0;
 
 									armState = ArmMovingTowardBowl;
 								}
-								if (ActionsForJaco != ActionNone)
+								if (ActionsForJaco != ActionNone && ActionsForJaco != ActionStop)
 								{
 									ActionsForJaco = ActionNone;
 								}
@@ -678,6 +680,7 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 							{
 								eyesClosedCounter[iFace] = 0;
 							}
+							OutputDebugString(L"\n WaitForEyesClosed state \n");
 						}
 						else if (armState == ArmMovingTowardBowl)
 						{
@@ -704,6 +707,7 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 							}	
 							#endif				
 							armState = WaitForMouthOpen;
+							OutputDebugString(L"\n ArmMovingTowardBowl state \n");
 						} else if (armState == WaitForMouthOpen)
 						{
 								// check if mouth is open
@@ -715,7 +719,7 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 										mouthOpenCounter[iFace] = 0;
 										armState = ArmMovingTowardMouth;
 									}
-									if (ActionsForJaco != ActionNone)
+									if (ActionsForJaco != ActionNone && ActionsForJaco != ActionStop)
 									{
 										ActionsForJaco = ActionNone;
 									}
@@ -724,8 +728,9 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 								{
 									mouthOpenCounter[iFace] = 0;
 								}
+								OutputDebugString(L"\n WaitForMouthOpen state \n");
 						}
-						else // if (armState == ArmMovingTowardMouth)
+						else if (armState == ArmMovingTowardMouth)
 						{
 							// send move command
 							// using dummy coordinates for now					
@@ -737,6 +742,16 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 							armResult = arm.MoveArm(x, y, z);
 				
 							armState = WaitForEyesClosed;
+							OutputDebugString(L"\n ArmMovingTowardMouth state \n");
+						}
+						else // if(armState == StopAllMovement
+						{
+							if (ActionsForJaco == ActionReset)
+							{
+								arm.MoveToNeutralPosition();
+								armState = WaitForEyesClosed;
+							}
+							OutputDebugString(L"\n NEW STATE \n");
 						}
 
 					#if TESTING

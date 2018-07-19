@@ -3,12 +3,6 @@
 #include "stdafx.h"
 #include <strsafe.h>
 #include "resource.h"
-// Kinova Includes
-#include "CommunicationLayerWindows.h"
-#include "CommandLayer.h"
-#include <conio.h>
-#include "KinovaTypes.h"
-#include "SpeechBasics-D2D/SpeechBasics.h"
 
 // other
 #include <iostream>
@@ -17,6 +11,7 @@
 #include <cstdlib>
 
 // Kinova API init
+#include "SpeechBasics-D2D/SpeechBasics.h"
 
 // A handle to the API.
 HINSTANCE commandLayer_handle;
@@ -148,14 +143,11 @@ int JacoArm::MoveToNeutralPosition()
 	pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
 	pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
 	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
+	int rc = SendPoint(pointToSend);
 
-	int result = MySendAdvanceTrajectory(pointToSend);
-	WaitForArmMove();
-	if (result != NO_ERROR_KINOVA)
-	{
-		OutputDebugString(L"Could not send advanced trajectory");
-	}
-	return result;
+	MyEraseAllTrajectories();
+
+	return rc;
 }
 
 
@@ -188,16 +180,11 @@ int JacoArm::MoveArm(float x, float y, float z)
 	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
 	
 	OutputDebugString(L"Sending the point to the robot.\n");
-	int result = MySendAdvanceTrajectory(pointToSend);
-	if (result != NO_ERROR_KINOVA)
-	{
-		OutputDebugString(L"Could not send advanced trajectory");
-	}
+	int rc = SendPoint(pointToSend);
 
-	WaitForArmMove();
 	MyEraseAllTrajectories();
 
-	return 1;
+	return rc;
 }
 
 
@@ -209,7 +196,7 @@ int JacoArm::Scoop()
 {
 	if (ActionsForJaco == ActionStop)
 	{
-		return 0;
+		return false;
 	}
 
 	MyEraseAllTrajectories();
@@ -233,47 +220,29 @@ int JacoArm::Scoop()
 	pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
 	pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
 	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
-
-	int result = MySendAdvanceTrajectory(pointToSend);
-	if (result != NO_ERROR_KINOVA)
-	{
-		OutputDebugString(L"Could not send advanced trajectory");
-	}
-	WaitForArmMove();
+	SendPoint(pointToSend);
 
 	// scrape
 	pointToSend.Position.CartesianPosition.Y = currentCommand.Coordinates.Y - 0.06f;
-	result = MySendAdvanceTrajectory(pointToSend);
-	if (result != NO_ERROR_KINOVA)
-	{
-		OutputDebugString(L"Could not send advanced trajectory");
-	}
-	WaitForArmMove();
+	int rc = SendPoint(pointToSend);
 
 	// back up
 	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z;
 	pointToSend.Position.CartesianPosition.ThetaX = 1.8796;
 	pointToSend.Position.CartesianPosition.ThetaY = 0.4309;
 	pointToSend.Position.CartesianPosition.ThetaZ = -1.5505;
-	result = MySendAdvanceTrajectory(pointToSend);
-	if (result != NO_ERROR_KINOVA)
-	{
-		OutputDebugString(L"Could not send advanced trajectory");
-	}
-
-	WaitForArmMove();
+	rc = SendPoint(pointToSend);
 	MyEraseAllTrajectories();
 
-	return 1;
+	return rc;
 }
 
 int JacoArm::Soup()
 {
 	if (ActionsForJaco == ActionStop)
 	{
-		return 0;
+		return false;
 	}
-
 	MyEraseAllTrajectories();
 	CartesianPosition currentCommand;
 	TrajectoryPoint pointToSend;
@@ -285,7 +254,6 @@ int JacoArm::Soup()
 
 	MyGetCartesianCommand(currentCommand);
 
-
 	pointToSend.Position.CartesianPosition.X = currentCommand.Coordinates.X;
 	pointToSend.Position.CartesianPosition.Y = currentCommand.Coordinates.Y;
 	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z - 0.08f;
@@ -295,46 +263,25 @@ int JacoArm::Soup()
 	pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
 	pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
 	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
-
-	int result = MySendAdvanceTrajectory(pointToSend);
-	if (result != NO_ERROR_KINOVA)
-	{
-		OutputDebugString(L"Could not send advanced trajectory");
-	}
-	WaitForArmMove();
+	int rc = SendPoint(pointToSend);
 
 	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z;
+	rc = SendPoint(pointToSend);
 
-	result = MySendAdvanceTrajectory(pointToSend);
-	if (result != NO_ERROR_KINOVA)
-	{
-		OutputDebugString(L"Could not send advanced trajectory");
-	}
 	pointToSend.Position.CartesianPosition.ThetaZ = -1.2264;
-	WaitForArmMove();
+	rc = SendPoint(pointToSend);
 
-	result = MySendAdvanceTrajectory(pointToSend);
-	if (result != NO_ERROR_KINOVA)
-	{
-		OutputDebugString(L"Could not send advanced trajectory");
-	}
 	pointToSend.Position.CartesianPosition.ThetaZ = currentCommand.Coordinates.ThetaZ;
-	WaitForArmMove();
-
-	result = MySendAdvanceTrajectory(pointToSend);
-	if (result != NO_ERROR_KINOVA)
-	{
-		OutputDebugString(L"Could not send advanced trajectory");
-	}
-	WaitForArmMove();
+	rc = SendPoint(pointToSend);
 	MyEraseAllTrajectories();
 
-	return 1;
+	return rc;
 }
 
 
 int JacoArm::WaitForArmMove()
 {
+	Sleep(250);
 	int timeout = 0;
 	TrajectoryFIFO poses_buffer;
 	MyGetGlobalTrajectoryInfo(poses_buffer);
@@ -344,21 +291,21 @@ int JacoArm::WaitForArmMove()
 		{
 			OutputDebugString(L"We stoppin");
 			MyEraseAllTrajectories();
-			break;
+			return false;
 		}
 
 		if (timeout >= 40)
 		{
-			break;
+			return false;
 		}
 
-		OutputDebugString(L"FaceBasics.cpp: Arm is moving\n");
+		OutputDebugString(L"JacoArm.cpp: Arm is moving\n");
 		MyGetGlobalTrajectoryInfo(poses_buffer);
 		Sleep(250);
 		timeout++;
 	}
-	OutputDebugString(L"FaceBasics.cpp: Arm is stopped\n");
-	return 0;
+	OutputDebugString(L"JacoArm.cpp: Arm is stopped\n");
+	return true;
 }
 
 /// <summary>
@@ -374,5 +321,19 @@ void JacoArm::KinectToArm(float kx, float ky, float kz, float* x, float* y, floa
 	*x = -az;
 	*y = -ax;
 	*z = ay;
+}
+
+int JacoArm::SendPoint(TrajectoryPoint pointToSend)
+{
+	int result = MySendAdvanceTrajectory(pointToSend);
+	if (result != NO_ERROR_KINOVA)
+	{
+		OutputDebugString(L"Could not send advanced trajectory");
+		return false;
+	}
+
+	int rc = WaitForArmMove();
+	
+	return rc;
 }
 

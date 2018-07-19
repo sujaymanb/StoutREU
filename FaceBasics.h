@@ -12,6 +12,9 @@
 #include "JacoArm.h"
 #define TESTING 1
 
+#define SUCCESS 1
+#define FAILURE 0  
+
 #define BOWL_OFFSET_X -.1
 #define BOWL_OFFSET_Y .25
 #define BOWL_OFFSET_Z .1
@@ -32,7 +35,8 @@ enum State
 	WaitForEyesClosed,
 	ArmMovingTowardBowl,
 	WaitForMouthOpen,
-	ArmMovingTowardMouth
+	ArmMovingTowardMouth,
+	StopAllMovement
 };
 
 class CFaceBasics
