@@ -378,12 +378,41 @@ void CSpeechBasics::ProcessSpeech()
                         {
                             Action newAction = MapSpeechTagToAction(pSemanticTag->pszValue);
 
-							if ((newAction != ActionNone) 
-								|| (ActionsForJaco != ActionStop)
-								|| (ActionsForJaco == ActionStop && newAction == ActionReset))
+							if ((newAction != ActionNone) ||
+								(ActionsForJaco != ActionStop) ||
+								(ActionsForJaco == ActionStop && newAction == ActionReset))
 							{
 								ActionsForJaco = newAction;
 							}
+
+							// print out speech command
+							
+							switch (ActionsForJaco)
+							{
+							case ActionDrink:
+								OutputDebugString(L"Drink\n");
+								break;
+							case ActionFood:
+								OutputDebugString(L"Food\n");
+								break;
+							case ActionBowl:
+								OutputDebugString(L"Bowl\n");
+								break;
+							case ActionScoop:
+								OutputDebugString(L"Scoop\n");
+								break;
+							case ActionSoup:
+								OutputDebugString(L"Soup\n");
+								break;
+							case ActionStop:
+								OutputDebugString(L"Stop\n");
+								break;
+							case ActionReset:
+								OutputDebugString(L"Reset\n");
+								break;
+							}
+
+							
 
                         }
                     }
@@ -434,6 +463,8 @@ Action CSpeechBasics::MapSpeechTagToAction(LPCWSTR pszSpeechTag)
             break;
         }
     }
+
+
 
     return action;
 }

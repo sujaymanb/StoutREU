@@ -142,6 +142,10 @@ private:
     /// <returns>success or failure</returns>
     bool                   SetStatusMessage(_In_z_ WCHAR* szMessage, ULONGLONG nShowTimeMsec, bool bForce);
 
+	/// <summary>
+	/// </summary>
+	void InterpretSpeechAndGestures(DetectionResult faceProperties[], CameraSpacePoint mouthPoints[], int iFace, JacoArm& arm);
+
     HWND                   m_hWnd;
     INT64                  m_nStartTime;
     INT64                  m_nLastCounter;

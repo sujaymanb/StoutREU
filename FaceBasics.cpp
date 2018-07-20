@@ -534,7 +534,7 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 		mouthPoints[i].Y = 999.0;
 		mouthPoints[i].Z = 999.0;
 	}
-	int iFaceMin = 0;	// current min face index
+
 	bool bHaveBodyData = SUCCEEDED(UpdateBodyData(ppBodies));
 
 	// iterate through each face reader
@@ -543,7 +543,6 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 		// retrieve the latest face frame from this reader
 		IFaceFrame* pFaceFrame = nullptr;
 		hr = m_pFaceFrameReaders[iFace]->AcquireLatestFrame(&pFaceFrame);
-		float min = 999.0;
 
 		BOOLEAN bFaceTracked = false;
 		if (SUCCEEDED(hr) && nullptr != pFaceFrame)
@@ -562,8 +561,7 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 				Vector4 faceRotation;
 				DetectionResult faceProperties[FaceProperty::FaceProperty_Count];
 				D2D1_POINT_2F faceTextLayout;
-				static EatingMode mode = SoupMode;
-				static State armState = WaitForEyesClosed;
+				
 
 				hr = pFaceFrame->get_FaceFrameResult(&pFaceFrameResult);
 
@@ -600,170 +598,9 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 						// update the distances
 						hr = GetMouthPosition(ppBodies[iFace], &mouthPoints[iFace]);
 
-						for (int i = 0; i < BODY_COUNT; ++i)
-						{
-							if (mouthPoints[i].Z < min)
-							{
-								iFaceMin = i;
-								min = mouthPoints[i].Z;
-							}
-						}
-						#if TESTING
-						switch (ActionsForJaco)
-						{
-						case ActionDrink:
-							OutputDebugString(L"Drink\n");
-							break;
-						case ActionFood:
-							OutputDebugString(L"Food\n");
-							break;
-						case ActionBowl:
-							OutputDebugString(L"Bowl\n");
-							break;
-						case ActionScoop:
-							OutputDebugString(L"Scoop\n");
- 							break;
-						case ActionSoup:
-							OutputDebugString(L"Soup\n");
-							break;
-						case ActionStop:
-							OutputDebugString(L"Stop\n");
-							break;
-						case ActionReset:
-							OutputDebugString(L"Reset\n");
-							break;
-						}
-		
-						#endif			
-
-						if (ActionsForJaco == ActionScoop)
-						{
-							mode = ScoopMode;
-						}
-						else if (ActionsForJaco == ActionSoup)
-						{
-							mode = SoupMode;
-						}
-						else if (ActionsForJaco == ActionDrink)
-						{
-							mode = DrinkMode;
-						}
 						
-						if (ActionsForJaco == ActionStop)
-						{
-							armState = StopAllMovement;
-						}
-						
-						if (armState == WaitForEyesClosed )
-						{
 
-							// If min face and if one of the following is true:
-							// both eyes closed
-							// 'Bowl' is said by user
-							if (((faceProperties[FaceProperty_LeftEyeClosed] == DetectionResult_Yes
-								&& faceProperties[FaceProperty_RightEyeClosed] == DetectionResult_Yes) || ActionsForJaco == ActionBowl)
-								&& mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
-							{
-								eyesClosedCounter[iFace]++;
-								if (eyesClosedCounter[iFace] >= 20 || ActionsForJaco == ActionBowl)
-								{
-									eyesClosedCounter[iFace] = 0;
-
-									armState = ArmMovingTowardBowl;
-								}
-								if (ActionsForJaco != ActionNone && ActionsForJaco != ActionStop)
-								{
-									ActionsForJaco = ActionNone;
-								}
-							}
-							else
-							{
-								eyesClosedCounter[iFace] = 0;
-							}
-							OutputDebugString(L"\n WaitForEyesClosed state \n");
-						}
-						else if (armState == ArmMovingTowardBowl)
-						{
-							float x, y, z;
-							// go to plate, position hard coded for now
-							arm.KinectToArm(arm.bowl_xpos+BOWL_OFFSET_X, arm.bowl_ypos+BOWL_OFFSET_Y, arm.bowl_zpos+BOWL_OFFSET_Z, &x, &y, &z);
-							arm.MoveArm(x, y, z);
-							
-							// pick up food
-							#if TESTING
-							if (mode == ScoopMode)
-							{
-								arm.Scoop();
-								OutputDebugString(L"\nIn Scoop Mode\n");
-							}
-							else if (mode == SoupMode)
-							{
-								arm.Soup();
-								OutputDebugString(L"\nIn Soup Mode\n");
-							}
-							else if (mode == DrinkMode)
-							{
-								OutputDebugString(L"\nIn Drink Mode\n");
-							}	
-							#endif				
-							armState = WaitForMouthOpen;
-							OutputDebugString(L"\n ArmMovingTowardBowl state \n");
-						} else if (armState == WaitForMouthOpen)
-						{
-								// check if mouth is open
-								if ((faceProperties[FaceProperty_MouthOpen] == DetectionResult_Yes || ActionsForJaco == ActionFood) && mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
-								{
-									mouthOpenCounter[iFace]++;
-									if (mouthOpenCounter[iFace] >= 30 || ActionsForJaco == ActionFood)
-									{
-										mouthOpenCounter[iFace] = 0;
-										armState = ArmMovingTowardMouth;
-									}
-									if (ActionsForJaco != ActionNone && ActionsForJaco != ActionStop)
-									{
-										ActionsForJaco = ActionNone;
-									}
-								}
-								else
-								{
-									mouthOpenCounter[iFace] = 0;
-								}
-								OutputDebugString(L"\n WaitForMouthOpen state \n");
-						}
-						else if (armState == ArmMovingTowardMouth)
-						{
-							// send move command
-							// using dummy coordinates for now					
-							int armResult;
-							float x, y, z;
-							arm.KinectToArm(mouthPoints[iFace].X, mouthPoints[iFace].Y, mouthPoints[iFace].Z, &x, &y, &z);
-							//armResult = MoveArm(0.3248, 0.45, 0.1672);
-
-							armResult = arm.MoveArm(x, y, z);
-				
-							armState = WaitForEyesClosed;
-							OutputDebugString(L"\n ArmMovingTowardMouth state \n");
-						}
-						else // if(armState == StopAllMovement
-						{
-							if (ActionsForJaco == ActionReset)
-							{
-								arm.MoveToNeutralPosition();
-								armState = WaitForEyesClosed;
-							}
-							OutputDebugString(L"\n NEW STATE \n");
-						}
-
-					#if TESTING
-						//state stuff end
-						std::wstringstream s;
-						s << L"Goal Coords: " << mouthPoints[iFace].X << ", " << mouthPoints[iFace].Y << ", " << mouthPoints[iFace].Z << "\n" 
-							<< mouthOpenCounter[iFace] << " Min: " << mouthPoints[iFaceMin].Z << "\n";
-						std::wstring ws = s.str();
-						LPCWSTR l = ws.c_str();
-						//OutputDebugString(l);
-					#endif
-						
+						InterpretSpeechAndGestures(faceProperties, mouthPoints, iFace, arm);
 						
 
 					}
@@ -903,3 +740,145 @@ bool CFaceBasics::SetStatusMessage(_In_z_ WCHAR* szMessage, ULONGLONG nShowTimeM
     return false;
 }
 
+
+void CFaceBasics::InterpretSpeechAndGestures(DetectionResult faceProperties[], CameraSpacePoint mouthPoints[], int iFace, JacoArm& arm)
+{
+	static EatingMode mode = SoupMode;
+	static State armState = WaitForEyesClosed;
+	static float min = 999.0;
+	static int iFaceMin;
+
+	for (int i = 0; i < BODY_COUNT; ++i)
+	{
+		if (mouthPoints[i].Z < min)
+		{
+			iFaceMin = i;
+			min = mouthPoints[i].Z;
+		}
+	}
+
+	// mode switches
+	if (ActionsForJaco == ActionScoop)
+	{
+		mode = ScoopMode;
+	}
+	else if (ActionsForJaco == ActionSoup)
+	{
+		mode = SoupMode;
+	}
+	else if (ActionsForJaco == ActionDrink)
+	{
+		mode = DrinkMode;
+	}
+
+	if (ActionsForJaco == ActionStop)
+	{
+		armState = StopAllMovement;
+	}
+
+	if (armState == WaitForEyesClosed)
+	{
+
+		// If min face and if one of the following is true:
+		// both eyes closed
+		// 'Bowl' is said by user
+		if (((faceProperties[FaceProperty_LeftEyeClosed] == DetectionResult_Yes
+			&& faceProperties[FaceProperty_RightEyeClosed] == DetectionResult_Yes) || ActionsForJaco == ActionBowl)
+			&& mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
+		{
+			eyesClosedCounter[iFace]++;
+			if (eyesClosedCounter[iFace] >= 20 || ActionsForJaco == ActionBowl)
+			{
+				eyesClosedCounter[iFace] = 0;
+
+				armState = ArmMovingTowardBowl;
+			}
+			if (ActionsForJaco != ActionNone && ActionsForJaco != ActionStop)
+			{
+				ActionsForJaco = ActionNone;
+			}
+		}
+		else
+		{
+			eyesClosedCounter[iFace] = 0;
+		}
+	}
+	else if (armState == ArmMovingTowardBowl)
+	{
+		float x, y, z;
+		// go to plate, position hard coded for now
+		arm.KinectToArm(arm.bowl_xpos + BOWL_OFFSET_X, arm.bowl_ypos + BOWL_OFFSET_Y, arm.bowl_zpos + BOWL_OFFSET_Z, &x, &y, &z);
+		arm.MoveArm(x, y, z);
+
+		// pick up food
+#if TESTING
+		if (mode == ScoopMode)
+		{
+			arm.Scoop();
+			OutputDebugString(L"\nIn Scoop Mode\n");
+		}
+		else if (mode == SoupMode)
+		{
+			arm.Soup();
+			OutputDebugString(L"\nIn Soup Mode\n");
+		}
+		else if (mode == DrinkMode)
+		{
+			OutputDebugString(L"\nIn Drink Mode\n");
+		}
+#endif				
+		armState = WaitForMouthOpen;
+	}
+	else if (armState == WaitForMouthOpen)
+	{
+		// check if mouth is open
+		if ((faceProperties[FaceProperty_MouthOpen] == DetectionResult_Yes || ActionsForJaco == ActionFood) && mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
+		{
+			mouthOpenCounter[iFace]++;
+			if (mouthOpenCounter[iFace] >= 30 || ActionsForJaco == ActionFood)
+			{
+				mouthOpenCounter[iFace] = 0;
+				armState = ArmMovingTowardMouth;
+			}
+			if (ActionsForJaco != ActionNone && ActionsForJaco != ActionStop)
+			{
+				ActionsForJaco = ActionNone;
+			}
+		}
+		else
+		{
+			mouthOpenCounter[iFace] = 0;
+		}
+	}
+	else if (armState == ArmMovingTowardMouth)
+	{
+		// send move command
+		// using dummy coordinates for now					
+		int armResult;
+		float x, y, z;
+		arm.KinectToArm(mouthPoints[iFace].X, mouthPoints[iFace].Y, mouthPoints[iFace].Z, &x, &y, &z);
+		//armResult = MoveArm(0.3248, 0.45, 0.1672);
+
+		armResult = arm.MoveArm(x, y, z);
+
+		armState = WaitForEyesClosed;
+	}
+	else // if(armState == StopAllMovement
+	{
+		if (ActionsForJaco == ActionReset)
+		{
+			arm.MoveToNeutralPosition();
+			armState = WaitForEyesClosed;
+		}
+	}
+
+#if TESTING
+	//state stuff end
+	std::wstringstream s;
+	s << L"Goal Coords: " << mouthPoints[iFace].X << ", " << mouthPoints[iFace].Y << ", " << mouthPoints[iFace].Z << "\n"
+		<< mouthOpenCounter[iFace] << " Min: " << mouthPoints[iFaceMin].Z << "\n";
+	std::wstring ws = s.str();
+	LPCWSTR l = ws.c_str();
+	//OutputDebugString(l);
+#endif
+}
