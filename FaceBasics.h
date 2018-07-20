@@ -20,8 +20,8 @@
 #define BOWL_OFFSET_Z .1
 
 #define MOUTH_OFFSET_X 0
-#define MOUTH_OFFSET_Y .15
-#define MOUTH_OFFSET_Z -.2
+#define MOUTH_OFFSET_Y .05
+#define MOUTH_OFFSET_Z -.05
 
 enum EatingMode
 {
