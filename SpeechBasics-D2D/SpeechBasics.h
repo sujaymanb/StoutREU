@@ -27,7 +27,6 @@ __pragma(warning(pop))
 
 enum Action
 {
-	ActionDrink,
 	ActionFood,
 	ActionBowl,
 	ActionSoup,

@@ -2,14 +2,6 @@
   <rule id="rootRule">
     <one-of>
       <item>
-        <tag>DRINK</tag>
-        <one-of>
-          <item> drink </item>
-          <item> drinks </item>
-          <item> water </item>
-        </one-of>
-      </item>
-      <item>
         <tag>FOOD</tag>
         <one-of>
           <item> food </item>

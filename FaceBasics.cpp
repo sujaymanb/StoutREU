@@ -766,10 +766,6 @@ void CFaceBasics::InterpretSpeechAndGestures(DetectionResult faceProperties[], C
 	{
 		mode = SoupMode;
 	}
-	else if (ActionsForJaco == ActionDrink)
-	{
-		mode = DrinkMode;
-	}
 
 	if (ActionsForJaco == ActionStop)
 	{
@@ -822,11 +818,8 @@ void CFaceBasics::InterpretSpeechAndGestures(DetectionResult faceProperties[], C
 			arm.Soup();
 			OutputDebugString(L"\nIn Soup Mode\n");
 		}
-		else if (mode == DrinkMode)
-		{
-			OutputDebugString(L"\nIn Drink Mode\n");
-		}
-#endif				
+#endif	
+		arm.MoveToNeutralPosition();
 		armState = WaitForMouthOpen;
 	}
 	else if (armState == WaitForMouthOpen)

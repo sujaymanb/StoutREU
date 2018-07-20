@@ -389,9 +389,6 @@ void CSpeechBasics::ProcessSpeech()
 							
 							switch (ActionsForJaco)
 							{
-							case ActionDrink:
-								OutputDebugString(L"Drink\n");
-								break;
 							case ActionFood:
 								OutputDebugString(L"Food\n");
 								break;
@@ -443,7 +440,6 @@ Action CSpeechBasics::MapSpeechTagToAction(LPCWSTR pszSpeechTag)
     };
     const SpeechTagToAction Map[] =
     {
-        {L"DRINK", ActionDrink},
         {L"FOOD", ActionFood},
         {L"BOWL", ActionBowl},
 		{L"SOUP", ActionSoup},
