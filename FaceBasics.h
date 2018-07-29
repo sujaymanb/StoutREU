@@ -15,12 +15,12 @@
 #define SUCCESS 1
 #define FAILURE 0  
 
-#define BOWL_OFFSET_X -.1
+#define BOWL_OFFSET_X -0.05
 #define BOWL_OFFSET_Y .25
-#define BOWL_OFFSET_Z .1
+#define BOWL_OFFSET_Z 0
 
-#define MOUTH_OFFSET_X -0.1
-#define MOUTH_OFFSET_Y .03
+#define MOUTH_OFFSET_X .05 //increase to go left
+#define MOUTH_OFFSET_Y .2 // increase to go up
 #define MOUTH_OFFSET_Z -.09
 
 enum EatingMode

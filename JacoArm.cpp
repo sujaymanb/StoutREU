@@ -130,16 +130,16 @@ int JacoArm::MoveToNeutralPosition()
 	MyGetCartesianCommand(currentCommand);
 
 	float neutral_x, neutral_y, neutral_z;
-	float y_offset_bowl = .4;
+	float y_offset_bowl = .5;
 
 	KinectToArm(bowl_xpos, (bowl_ypos + y_offset_bowl), bowl_zpos, &neutral_x, &neutral_y, &neutral_z);
 
 	pointToSend.Position.CartesianPosition.X = neutral_x;
 	pointToSend.Position.CartesianPosition.Y = neutral_y;
 	pointToSend.Position.CartesianPosition.Z = neutral_z;
-	pointToSend.Position.CartesianPosition.ThetaX = 1.8796;
-	pointToSend.Position.CartesianPosition.ThetaY = 0.4309;
-	pointToSend.Position.CartesianPosition.ThetaZ = -1.5505;
+	pointToSend.Position.CartesianPosition.ThetaX = 2.1797; // was 1.8796
+	pointToSend.Position.CartesianPosition.ThetaY = -0.5404; // was 0.4309
+	pointToSend.Position.CartesianPosition.ThetaZ = -1.1281; // was -1.5505
 	pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
 	pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
 	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
@@ -172,9 +172,9 @@ int JacoArm::MoveArm(float x, float y, float z)
 	pointToSend.Position.CartesianPosition.X = x;
 	pointToSend.Position.CartesianPosition.Y = y;
 	pointToSend.Position.CartesianPosition.Z = z;
-	pointToSend.Position.CartesianPosition.ThetaX = 1.8796;
-	pointToSend.Position.CartesianPosition.ThetaY = 0.4309;
-	pointToSend.Position.CartesianPosition.ThetaZ = -1.5505;
+	pointToSend.Position.CartesianPosition.ThetaX =  2.1797;
+	pointToSend.Position.CartesianPosition.ThetaY = -.5404;
+	pointToSend.Position.CartesianPosition.ThetaZ = -1.1281;
 	pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
 	pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
 	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;

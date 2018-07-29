@@ -124,7 +124,7 @@ CFaceBasics::~CFaceBasics()
     // done with color frame reader
     SafeRelease(m_pColorFrameReader);
 
-    // done with coordinate mapper
+    // done with coordinate mapper n
     SafeRelease(m_pCoordinateMapper);
 
     // close the Kinect Sensor
