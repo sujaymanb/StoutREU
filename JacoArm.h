@@ -7,14 +7,14 @@
 #include "CommandLayer.h"
 #include <conio.h>
 #include "KinovaTypes.h"
-
+#include "ArTracker.h"
 
 extern cv::Vec3d armVec, bowlVec; 
 class JacoArm
 {
 public:
 	// Constructor
-	JacoArm(cv::Vec3d armVec);
+	JacoArm();
 
 	// Destructor
 	~JacoArm();
@@ -54,6 +54,11 @@ public:
 	/// </summary>
 	int SendPoint(TrajectoryPoint pointToSend);
 
+	/// <summary>
+	/// update ar marker positions
+	/// </summary>
+	void UpdateArPositions();
+
 	float				   bowl_xpos;
 	float				   bowl_ypos;
 	float				   bowl_zpos;
@@ -63,6 +68,5 @@ private:
 	float				   x_offset;
 	float				   y_offset;
 	float				   z_offset;
-
-	
+	ArTracker			   tracker;
 };

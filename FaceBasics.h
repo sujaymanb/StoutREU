@@ -43,8 +43,8 @@ class CFaceBasics
 {
 	static const int       cDepthWidth = 512;
 	static const int       cDepthHeight = 424;
-    static const int       cColorWidth  = 1920;
-    static const int       cColorHeight = 1080;
+    //static const int       cColorWidth  = 1920;
+    //static const int       cColorHeight = 1080;
 
 public:
     /// <summary>
@@ -144,7 +144,7 @@ private:
 
 	/// <summary>
 	/// </summary>
-	void InterpretSpeechAndGestures(DetectionResult faceProperties[], CameraSpacePoint mouthPoints[], int iFace, JacoArm& arm);
+	void InterpretSpeechAndGestures(DetectionResult faceProperties[], CameraSpacePoint mouthPoints[], int iFace, JacoArm& arm, IBody* pBody, PointF facePoints[]);
 
 	/// <summary>
 	/// Map color space point to camera space

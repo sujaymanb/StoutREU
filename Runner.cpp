@@ -3,14 +3,12 @@
 #include "FaceBasics.h"
 #include "SpeechBasics-D2D/SpeechBasics.h"
 #include "stdafx.h"
-#include "ArTracker.h"
 #include "JacoArm.h"
 
 #define INITGUID
 #include <guiddef.h>
 
 
-cv::Vec3d armVec, bowlVec;
 // Static initializers
 //LPCWSTR CSpeechBasics::GrammarFileName = L"SpeechBasics-D2D/SpeechBasics-D2D.grxml";
 
@@ -22,6 +20,7 @@ DEFINE_GUID(CLSID_ExpectedRecognizer, 0x495648e7, 0xf7ab, 0x4267, 0x8e, 0x0f, 0x
 
 using namespace std;
 IKinectSensor*  m_pKinectSensor;
+cv::Vec3d armVec, bowlVec;
 
 void FaceBasicsThread(HINSTANCE hInstance, int nCmdShow, JacoArm& arm)
 {
@@ -78,9 +77,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	hr = m_pKinectSensor->Open();
 	if(SUCCEEDED(hr))
 	{ 
-		ArTracker tracker;
-		tracker.GetARPosition(armVec, bowlVec);
-		JacoArm arm(armVec);
+		JacoArm arm;
 
 		thread th1(SpeechRecognizerThread, hInstance, nCmdShow);
 		thread th2(FaceBasicsThread, hInstance, nCmdShow, arm);

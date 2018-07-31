@@ -691,10 +691,9 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 						// draw face frame results
 						m_pDrawDataStreams->DrawFaceFrameResults(iFace, &faceBox, facePoints, &faceRotation, faceProperties, &faceTextLayout);
 
-						// update the distances
-						hr = GetMouthPosition(ppBodies[iFace], &mouthPoints[iFace], facePoints);
+						// update the distance
 
-						InterpretSpeechAndGestures(faceProperties, mouthPoints, iFace, arm);
+						InterpretSpeechAndGestures(faceProperties, mouthPoints, iFace, arm, ppBodies[iFace], facePoints);
 					}
 				}
 
@@ -834,7 +833,7 @@ bool CFaceBasics::SetStatusMessage(_In_z_ WCHAR* szMessage, ULONGLONG nShowTimeM
 }
 
 
-void CFaceBasics::InterpretSpeechAndGestures(DetectionResult faceProperties[], CameraSpacePoint mouthPoints[], int iFace, JacoArm& arm)
+void CFaceBasics::InterpretSpeechAndGestures(DetectionResult faceProperties[], CameraSpacePoint mouthPoints[], int iFace, JacoArm& arm, IBody* pBody, PointF facePoints[])
 {
 	static EatingMode mode = SoupMode;
 	static State armState = WaitForEyesClosed;
@@ -895,6 +894,7 @@ void CFaceBasics::InterpretSpeechAndGestures(DetectionResult faceProperties[], C
 	{
 		float x, y, z;
 		// go to plate, position hard coded for now
+		arm.UpdateArPositions();
 		arm.KinectToArm(arm.bowl_xpos + BOWL_OFFSET_X, arm.bowl_ypos + BOWL_OFFSET_Y, arm.bowl_zpos + BOWL_OFFSET_Z, &x, &y, &z);
 		arm.MoveArm(x, y, z);
 
@@ -941,6 +941,9 @@ void CFaceBasics::InterpretSpeechAndGestures(DetectionResult faceProperties[], C
 		// using dummy coordinates for now					
 		int armResult;
 		float x, y, z;
+
+		arm.UpdateArPositions();
+		GetMouthPosition(pBody, &mouthPoints[iFace], facePoints);
 		arm.KinectToArm(mouthPoints[iFace].X, mouthPoints[iFace].Y, mouthPoints[iFace].Z, &x, &y, &z);
 		//armResult = MoveArm(0.3248, 0.45, 0.1672);
 
@@ -952,6 +955,7 @@ void CFaceBasics::InterpretSpeechAndGestures(DetectionResult faceProperties[], C
 	{
 		if (ActionsForJaco == ActionReset)
 		{
+			arm.UpdateArPositions();
 			arm.MoveToNeutralPosition();
 			armState = WaitForEyesClosed;
 		}

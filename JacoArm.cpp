@@ -29,27 +29,9 @@ int(*MyGetCartesianCommand)(CartesianPosition &);
 int(*MyEraseAllTrajectories)();
 int(*MyGetGlobalTrajectoryInfo)(TrajectoryFIFO &);
 
-JacoArm::JacoArm(cv::Vec3d armVec) 
+JacoArm::JacoArm() 
 {
-	x_offset = -armVec[0];
-	y_offset = -armVec[1];
-	z_offset = armVec[2];
-
-	std::wstringstream s;
-	s << L"\noffset x: " << x_offset << "\n" << "offset y: " << y_offset << "\n" << "offset z: " << z_offset << "\n";
-	std::wstring ws = s.str();
-	LPCWSTR l = ws.c_str();
-	OutputDebugString(l);
-
-	bowl_xpos = -bowlVec[0];
-	bowl_ypos = -bowlVec[1];
-	bowl_zpos = bowlVec[2];
-
-	std::wstringstream s1;
-	s1 << L"\nbowl offset x: " << bowl_xpos << "\n" << "bowl offset y: " << bowl_ypos << "\n" << "bowl offset z: " << bowl_zpos << "\n";
-	std::wstring ws1 = s1.str();
-	LPCWSTR m = ws1.c_str();
-	OutputDebugString(m);
+	UpdateArPositions();
 
 	//We load the API.
 	commandLayer_handle = LoadLibrary(L"CommandLayerWindows.dll");
@@ -337,3 +319,27 @@ int JacoArm::SendPoint(TrajectoryPoint pointToSend)
 	return rc;
 }
 
+
+void JacoArm::UpdateArPositions()
+{
+	tracker.GetARPosition(armVec, bowlVec);
+	x_offset = -armVec[0];
+	y_offset = -armVec[1];
+	z_offset = armVec[2];
+
+	std::wstringstream s;
+	s << L"\noffset x: " << x_offset << "\n" << "offset y: " << y_offset << "\n" << "offset z: " << z_offset << "\n";
+	std::wstring ws = s.str();
+	LPCWSTR l = ws.c_str();
+	OutputDebugString(l);
+
+	bowl_xpos = -bowlVec[0];
+	bowl_ypos = -bowlVec[1];
+	bowl_zpos = bowlVec[2];
+
+	std::wstringstream s1;
+	s1 << L"\nbowl offset x: " << bowl_xpos << "\n" << "bowl offset y: " << bowl_ypos << "\n" << "bowl offset z: " << bowl_zpos << "\n";
+	std::wstring ws1 = s1.str();
+	LPCWSTR m = ws1.c_str();
+	OutputDebugString(m);
+}
