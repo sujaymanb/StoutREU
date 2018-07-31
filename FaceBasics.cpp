@@ -874,7 +874,7 @@ void CFaceBasics::InterpretSpeechAndGestures(DetectionResult faceProperties[], C
 			&& mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
 		{
 			eyesClosedCounter[iFace]++;
-			if (eyesClosedCounter[iFace] >= 10 || ActionsForJaco == ActionBowl)
+			if (eyesClosedCounter[iFace] >= 30 || ActionsForJaco == ActionBowl)
 			{
 				eyesClosedCounter[iFace] = 0;
 
@@ -920,7 +920,7 @@ void CFaceBasics::InterpretSpeechAndGestures(DetectionResult faceProperties[], C
 		if ((faceProperties[FaceProperty_MouthOpen] == DetectionResult_Yes || ActionsForJaco == ActionFood) && mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
 		{
 			mouthOpenCounter[iFace]++;
-			if (mouthOpenCounter[iFace] >= 10 || ActionsForJaco == ActionFood)
+			if (mouthOpenCounter[iFace] >= 30 || ActionsForJaco == ActionFood)
 			{
 				mouthOpenCounter[iFace] = 0;
 				armState = ArmMovingTowardMouth;
