@@ -15,13 +15,13 @@
 #define SUCCESS 1
 #define FAILURE 0  
 
-#define BOWL_OFFSET_X -0.05
-#define BOWL_OFFSET_Y .25
+#define BOWL_OFFSET_X -.1
+#define BOWL_OFFSET_Y .19
 #define BOWL_OFFSET_Z 0
 
-#define MOUTH_OFFSET_X .05 //increase to go left
-#define MOUTH_OFFSET_Y .2 // increase to go up
-#define MOUTH_OFFSET_Z -.09
+#define MOUTH_OFFSET_X -0.08
+#define MOUTH_OFFSET_Y .15
+#define MOUTH_OFFSET_Z -.2
 
 enum EatingMode
 {
@@ -41,6 +41,8 @@ enum State
 
 class CFaceBasics
 {
+	static const int       cDepthWidth = 512;
+	static const int       cDepthHeight = 424;
     static const int       cColorWidth  = 1920;
     static const int       cColorHeight = 1080;
 
@@ -82,15 +84,13 @@ public:
     /// <param name="nCmdShow"></param>
     int                    Run(HINSTANCE hInstance, int nCmdShow, JacoArm& arm);
 
-	
-
 private:
 	
 
 	/// <summary>
 	/// Get the goal position
 	/// </summary>
-	HRESULT GetMouthPosition(IBody* pBody, CameraSpacePoint* mouthPosition);
+	HRESULT GetMouthPosition(IBody* pBody, CameraSpacePoint* mouthPosition, PointF facePoints[]);
 
     /// <summary>
     /// Main processing function
@@ -146,6 +146,11 @@ private:
 	/// </summary>
 	void InterpretSpeechAndGestures(DetectionResult faceProperties[], CameraSpacePoint mouthPoints[], int iFace, JacoArm& arm);
 
+	/// <summary>
+	/// Map color space point to camera space
+	/// </summary>
+	HRESULT MapColorToCameraCoordinates(const ColorSpacePoint& colorsps, CameraSpacePoint& camerasps);
+
     HWND                   m_hWnd;
     INT64                  m_nStartTime;
     INT64                  m_nLastCounter;
@@ -158,6 +163,9 @@ private:
 
     // Color reader
     IColorFrameReader*     m_pColorFrameReader;
+
+	// Depth reader
+	IDepthFrameReader*	   m_pDepthFrameReader;
 
     // Body reader
     IBodyFrameReader*      m_pBodyFrameReader;
@@ -172,6 +180,19 @@ private:
     ImageRenderer*         m_pDrawDataStreams;
     ID2D1Factory*          m_pD2DFactory;
     RGBQUAD*               m_pColorRGBX;
+	DepthSpacePoint*       m_pDepthCoordinates;
+
+	CameraSpacePoint*      cameraSpacePoints;
+
+	// Frame reader
+	IMultiSourceFrameReader* m_pMultiSourceFrameReader;
+
+	UINT16* pDepthBuffer; 
+	int nColorWidth = 0;
+	int nColorHeight = 0;
+
+	int nDepthWidth = 0;
+	int nDepthHeight = 0;
 
 	// Arm Moving Flag
 	bool				   armMovingFlag;
@@ -179,5 +200,6 @@ private:
 	// counters
 	int					   mouthOpenCounter[BODY_COUNT];
 	int					   eyesClosedCounter[BODY_COUNT];
+
 };
 

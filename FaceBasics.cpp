@@ -26,6 +26,13 @@
 #include <conio.h>
 #include <cstdlib>
 
+//test
+#include "stdafx.h"
+#include <strsafe.h>
+#include <math.h>
+#include <limits>
+#include <Wincodec.h>
+#include "resource.h"
 
 
 // face property text layout offset in X axis
@@ -64,9 +71,11 @@ CFaceBasics::CFaceBasics() :
     m_pD2DFactory(nullptr),
     m_pDrawDataStreams(nullptr),
     m_pColorRGBX(nullptr),
-    m_pBodyFrameReader(nullptr)	
+    m_pBodyFrameReader(nullptr),	
+	cameraSpacePoints(nullptr),
+	m_pDepthCoordinates(nullptr)
 {
-
+	pDepthBuffer = nullptr;
     LARGE_INTEGER qpf = {0};
     if (QueryPerformanceFrequency(&qpf))
     {
@@ -82,6 +91,15 @@ CFaceBasics::CFaceBasics() :
     // create heap storage for color pixel data in RGBX format
     m_pColorRGBX = new RGBQUAD[cColorWidth * cColorHeight];
 
+	// create heap storage for the coorinate mapping from color to depth
+	m_pDepthCoordinates = new DepthSpacePoint[cColorWidth * cColorHeight];
+
+	cameraSpacePoints = new CameraSpacePoint[cColorWidth * cColorHeight];
+	for (int i = 0; i < (cColorWidth * cColorHeight); i++) {
+		cameraSpacePoints[i].X = 0;
+		cameraSpacePoints[i].Y = 0;
+		cameraSpacePoints[i].Z = 0;
+	}
 	// init vars
 	armMovingFlag = false;
 	int mouthOpenCounter[BODY_COUNT] = { 0 };
@@ -124,7 +142,7 @@ CFaceBasics::~CFaceBasics()
     // done with color frame reader
     SafeRelease(m_pColorFrameReader);
 
-    // done with coordinate mapper n
+    // done with coordinate mapper
     SafeRelease(m_pCoordinateMapper);
 
     // close the Kinect Sensor
@@ -177,7 +195,6 @@ int CFaceBasics::Run(HINSTANCE hInstance, int nCmdShow, JacoArm& arm)
     while (WM_QUIT != msg.message)
     {
         Update(arm);
-
         while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
         {
             // If a dialog message will be taken care of by the dialog proc
@@ -275,84 +292,85 @@ LRESULT CALLBACK CFaceBasics::DlgProc(HWND hWnd, UINT message, WPARAM wParam, LP
     return FALSE;
 }
 
+
 /// <summary>
 /// Initializes the default Kinect sensor
 /// </summary>
-/// <returns>S_OK on success else the failure code</returns>
+/// <returns>indicates success or failure</returns>
 HRESULT CFaceBasics::InitializeDefaultSensor()
 {
 	HRESULT hr;
-    if (m_pKinectSensor)
-    {
-        // Initialize Kinect and get color, body and face readers
-        IColorFrameSource* pColorFrameSource = nullptr;
-        IBodyFrameSource* pBodyFrameSource = nullptr;
 
-        hr = m_pKinectSensor->Open();
+	hr = GetDefaultKinectSensor(&m_pKinectSensor);
+	if (FAILED(hr))
+	{
+		return hr;
+	}
+	IBodyFrameSource* pBodyFrameSource = nullptr;
 
-        if (SUCCEEDED(hr))
-        {
-            hr = m_pKinectSensor->get_CoordinateMapper(&m_pCoordinateMapper);
-        }
+	if (m_pKinectSensor)
+	{
+		// Initialize the Kinect and get coordinate mapper and the frame reader
 
-        if (SUCCEEDED(hr))
-        {
-            hr = m_pKinectSensor->get_ColorFrameSource(&pColorFrameSource);
-        }
+		if (SUCCEEDED(hr))
+		{
+			hr = m_pKinectSensor->get_CoordinateMapper(&m_pCoordinateMapper);
+		}
 
-        if (SUCCEEDED(hr))
-        {
-            hr = pColorFrameSource->OpenReader(&m_pColorFrameReader);
-        }
+		hr = m_pKinectSensor->Open();
 
-        if (SUCCEEDED(hr))
-        {
-            hr = m_pKinectSensor->get_BodyFrameSource(&pBodyFrameSource);
-        }
+		if (SUCCEEDED(hr))
+		{
+			hr = m_pKinectSensor->get_BodyFrameSource(&pBodyFrameSource);
+		}
 
-        if (SUCCEEDED(hr))
-        {
-            hr = pBodyFrameSource->OpenReader(&m_pBodyFrameReader);
-        }
+		if (SUCCEEDED(hr))
+		{
+			hr = pBodyFrameSource->OpenReader(&m_pBodyFrameReader);
+		}
 
-        if (SUCCEEDED(hr))
-        {
-            // create a face frame source + reader to track each body in the fov
-            for (int i = 0; i < BODY_COUNT; i++)
-            {
-                if (SUCCEEDED(hr))
-                {
-                    // create the face frame source by specifying the required face frame features
-                    hr = CreateFaceFrameSource(m_pKinectSensor, 0, c_FaceFrameFeatures, &m_pFaceFrameSources[i]);
-                }
-                if (SUCCEEDED(hr))
-                {
-                    // open the corresponding reader
-                    hr = m_pFaceFrameSources[i]->OpenReader(&m_pFaceFrameReaders[i]);
-                }				
-            }
-        }        
+		if (SUCCEEDED(hr))
+		{
+			hr = m_pKinectSensor->OpenMultiSourceFrameReader(
+				FrameSourceTypes::FrameSourceTypes_Depth | FrameSourceTypes::FrameSourceTypes_Color | FrameSourceTypes::FrameSourceTypes_BodyIndex,
+				&m_pMultiSourceFrameReader);
+		}
 
-        SafeRelease(pColorFrameSource);
-        SafeRelease(pBodyFrameSource);
-    }
+		if (SUCCEEDED(hr))
+		{
+			// create a face frame source + reader to track each body in the fov
+			for (int i = 0; i < BODY_COUNT; i++)
+			{
+				if (SUCCEEDED(hr))
+				{
+					// create the face frame source by specifying the required face frame features
+					hr = CreateFaceFrameSource(m_pKinectSensor, 0, c_FaceFrameFeatures, &m_pFaceFrameSources[i]);
+				}
+				if (SUCCEEDED(hr))
+				{
+					// open the corresponding reader
+					hr = m_pFaceFrameSources[i]->OpenReader(&m_pFaceFrameReaders[i]);
+				}
+			}
+		}
+	}
 
-    if (!m_pKinectSensor || FAILED(hr))
-    {
-        SetStatusMessage(L"No ready Kinect found!", 10000, true);
-        return E_FAIL;
-    }
+	if (!m_pKinectSensor || FAILED(hr))
+	{
+		SetStatusMessage(L"No ready Kinect found!", 10000, true);
+		return E_FAIL;
+	}
 
-    return hr;
+	return hr;
 }
 
 /// <summary>
 /// Get the goal position
 /// </summary>
-HRESULT CFaceBasics::GetMouthPosition(IBody* pBody, CameraSpacePoint* mouthPosition)
+HRESULT CFaceBasics::GetMouthPosition(IBody* pBody, CameraSpacePoint* mouthPosition, PointF facePoints[])
 {
-	HRESULT hr = E_FAIL;
-
+	CameraSpacePoint headPos;
+	HRESULT hr = E_FAIL; 
 	if (pBody != nullptr)
 	{
 		BOOLEAN bTracked = false;
@@ -368,11 +386,24 @@ HRESULT CFaceBasics::GetMouthPosition(IBody* pBody, CameraSpacePoint* mouthPosit
 
 				// set offsets here if needed
 				// for now just returns head position
-				mouthPosition->X = headJoint.X + MOUTH_OFFSET_X;
-				mouthPosition->Y = headJoint.Y + MOUTH_OFFSET_Y;
-				mouthPosition->Z = headJoint.Z + MOUTH_OFFSET_Z;
+				headPos.X = headJoint.X + MOUTH_OFFSET_X;
+				headPos.Y = headJoint.Y + MOUTH_OFFSET_Y;
+				headPos.Z = headJoint.Z + MOUTH_OFFSET_Z;
 			}
-		}
+		} 
+	}
+
+	CameraSpacePoint mouthPos;
+
+	ColorSpacePoint leftMouthCorner{ facePoints[FacePointType_MouthCornerRight].X, facePoints[FacePointType_MouthCornerRight].Y };
+	
+	hr = MapColorToCameraCoordinates(leftMouthCorner, mouthPos);
+
+	if (SUCCEEDED(hr))
+	{
+		mouthPosition->X = mouthPos.X + MOUTH_OFFSET_X;
+		mouthPosition->Y = mouthPos.Y + MOUTH_OFFSET_Y;
+		mouthPosition->Z = mouthPos.Z + MOUTH_OFFSET_Z;
 	}
 
 	return hr;
@@ -383,74 +414,139 @@ HRESULT CFaceBasics::GetMouthPosition(IBody* pBody, CameraSpacePoint* mouthPosit
 /// </summary>
 void CFaceBasics::Update(JacoArm& arm)
 {
-    if (!m_pColorFrameReader || !m_pBodyFrameReader)
-    {
-        return;
-    }
+	if (!m_pMultiSourceFrameReader || !m_pBodyFrameReader)
+	{
+		return;
+	}
 
-    IColorFrame* pColorFrame = nullptr;
-    HRESULT hr = m_pColorFrameReader->AcquireLatestFrame(&pColorFrame);
+	static IMultiSourceFrame* pMultiSourceFrame = nullptr;
+	IDepthFrame* pDepthFrame = nullptr;
+	IColorFrame* pColorFrame = nullptr;
+	IBodyIndexFrame* pBodyIndexFrame = nullptr;
 
-    if (SUCCEEDED(hr))
-    {
-        INT64 nTime = 0;
-        IFrameDescription* pFrameDescription = nullptr;
-        int nWidth = 0;
-        int nHeight = 0;
-        ColorImageFormat imageFormat = ColorImageFormat_None;
-        UINT nBufferSize = 0;
-        RGBQUAD *pBuffer = nullptr;
+	// Get color frame
 
-        hr = pColorFrame->get_RelativeTime(&nTime);
+	HRESULT hr = m_pMultiSourceFrameReader->AcquireLatestFrame(&pMultiSourceFrame);
+	if (SUCCEEDED(hr))
+	{
+		IColorFrameReference* pColorFrameReference = nullptr;
 
-        if (SUCCEEDED(hr))
-        {
-            hr = pColorFrame->get_FrameDescription(&pFrameDescription);
-        }
+		hr = pMultiSourceFrame->get_ColorFrameReference(&pColorFrameReference);
+		if (SUCCEEDED(hr))
+		{
+			hr = pColorFrameReference->AcquireFrame(&pColorFrame);
+		}
 
-        if (SUCCEEDED(hr))
-        {
-            hr = pFrameDescription->get_Width(&nWidth);
-        }
+		SafeRelease(pColorFrameReference);
+		//IColorFrame* pColorFrame = nullptr;
 
-        if (SUCCEEDED(hr))
-        {
-            hr = pFrameDescription->get_Height(&nHeight);
-        }
+		IFrameDescription* pColorFrameDescription = NULL;
+		int nColorWidth = 0;
+		int nColorHeight = 0;
+		ColorImageFormat imageFormat = ColorImageFormat_None;
+		UINT nColorBufferSize = 0;
+		RGBQUAD *pColorBuffer = nullptr;
+		INT64 nTime = 0;
 
-        if (SUCCEEDED(hr))
-        {
-            hr = pColorFrame->get_RawColorImageFormat(&imageFormat);
-        }
+		if (SUCCEEDED(hr))
+		{
+			hr = pColorFrame->get_RelativeTime(&nTime);
+		}
 
-        if (SUCCEEDED(hr))
-        {
-            if (imageFormat == ColorImageFormat_Bgra)
-            {
-                hr = pColorFrame->AccessRawUnderlyingBuffer(&nBufferSize, reinterpret_cast<BYTE**>(&pBuffer));
-            }
-            else if (m_pColorRGBX)
-            {
-                pBuffer = m_pColorRGBX;
-                nBufferSize = cColorWidth * cColorHeight * sizeof(RGBQUAD);
-                hr = pColorFrame->CopyConvertedFrameDataToArray(nBufferSize, reinterpret_cast<BYTE*>(pBuffer), ColorImageFormat_Bgra);            
-            }
-            else
-            {
-                hr = E_FAIL;
-            }
-        }			
+		if (SUCCEEDED(hr))
+		{
+			hr = pColorFrame->get_FrameDescription(&pColorFrameDescription);
+		}
 
-        if (SUCCEEDED(hr))
-        {
-            DrawStreams(nTime, pBuffer, nWidth, nHeight, arm);
-        }
+		if (SUCCEEDED(hr))
+		{
+			hr = pColorFrameDescription->get_Width(&nColorWidth);
+		}
 
-        SafeRelease(pFrameDescription);		
-    }
+		if (SUCCEEDED(hr))
+		{
+			hr = pColorFrameDescription->get_Height(&nColorHeight);
+		}
 
+		if (SUCCEEDED(hr))
+		{
+			hr = pColorFrame->get_RawColorImageFormat(&imageFormat);
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			if (imageFormat == ColorImageFormat_Bgra)
+			{
+				hr = pColorFrame->AccessRawUnderlyingBuffer(&nColorBufferSize, reinterpret_cast<BYTE**>(&pColorBuffer));
+			}
+			else if (m_pColorRGBX)
+			{
+				pColorBuffer = m_pColorRGBX;
+				nColorBufferSize = cColorWidth * cColorHeight * sizeof(RGBQUAD);
+				hr = pColorFrame->CopyConvertedFrameDataToArray(nColorBufferSize, reinterpret_cast<BYTE*>(pColorBuffer), ColorImageFormat_Bgra);
+			}
+			else
+			{
+				hr = E_FAIL;
+			}
+		}
+
+		// Get Depth data
+
+		if (SUCCEEDED(hr))
+		{
+			IDepthFrameReference* pDepthFrameReference = NULL;
+
+			hr = pMultiSourceFrame->get_DepthFrameReference(&pDepthFrameReference);
+			if (SUCCEEDED(hr))
+			{
+				hr = pDepthFrameReference->AcquireFrame(&pDepthFrame);
+			}
+
+			SafeRelease(pDepthFrameReference);
+		}
+
+		INT64 nDepthTime = 0;
+		IFrameDescription* pDepthFrameDescription = NULL;
+		UINT nDepthBufferSize = 0;
+		// depth frame data
+		if (SUCCEEDED(hr))
+		{
+			hr = pDepthFrame->get_FrameDescription(&pDepthFrameDescription);
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			hr = pDepthFrameDescription->get_Width(&nDepthWidth);
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			hr = pDepthFrameDescription->get_Height(&nDepthHeight);
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			hr = pDepthFrame->AccessUnderlyingBuffer(&nDepthBufferSize, &pDepthBuffer);
+		}
+
+		// Draw image on window
+		if (SUCCEEDED(hr))
+		{
+			DrawStreams(nTime, pColorBuffer, nColorWidth, nColorHeight, arm);
+		}
+
+		//SafeRelease(pBodyIndexFrameDescription);
+		SafeRelease(pColorFrameDescription);
+		SafeRelease(pDepthFrameDescription);
+	}
+	
+	SafeRelease(pDepthFrame);
     SafeRelease(pColorFrame);
+	SafeRelease(pBodyIndexFrame);
+	SafeRelease(pMultiSourceFrame);
 }
+
 
 /// <summary>
 /// Renders the color and face streams
@@ -562,7 +658,6 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 				DetectionResult faceProperties[FaceProperty::FaceProperty_Count];
 				D2D1_POINT_2F faceTextLayout;
 				
-
 				hr = pFaceFrame->get_FaceFrameResult(&pFaceFrameResult);
 
 				// need to verify if pFaceFrameResult contains data before trying to access it
@@ -573,6 +668,7 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 					if (SUCCEEDED(hr))
 					{
 						hr = pFaceFrameResult->GetFacePointsInColorSpace(FacePointType::FacePointType_Count, facePoints);
+						
 					}
 
 					if (SUCCEEDED(hr))
@@ -596,13 +692,9 @@ void CFaceBasics::ProcessFaces(JacoArm& arm)
 						m_pDrawDataStreams->DrawFaceFrameResults(iFace, &faceBox, facePoints, &faceRotation, faceProperties, &faceTextLayout);
 
 						// update the distances
-						hr = GetMouthPosition(ppBodies[iFace], &mouthPoints[iFace]);
-
-						
+						hr = GetMouthPosition(ppBodies[iFace], &mouthPoints[iFace], facePoints);
 
 						InterpretSpeechAndGestures(faceProperties, mouthPoints, iFace, arm);
-						
-
 					}
 				}
 
@@ -682,6 +774,7 @@ HRESULT CFaceBasics::GetFaceTextPositionInColorSpace(IBody* pBody, D2D1_POINT_2F
 
                 ColorSpacePoint colorPoint = {0};
                 hr = m_pCoordinateMapper->MapCameraPointToColorSpace(textPoint, &colorPoint);
+			
 
                 if (SUCCEEDED(hr))
                 {
@@ -774,16 +867,15 @@ void CFaceBasics::InterpretSpeechAndGestures(DetectionResult faceProperties[], C
 
 	if (armState == WaitForEyesClosed)
 	{
-
 		// If min face and if one of the following is true:
 		// both eyes closed
 		// 'Bowl' is said by user
 		if (((faceProperties[FaceProperty_LeftEyeClosed] == DetectionResult_Yes
-			&& faceProperties[FaceProperty_RightEyeClosed] == DetectionResult_Yes) || ActionsForJaco == ActionBowl)
+			|| faceProperties[FaceProperty_RightEyeClosed] == DetectionResult_Yes) || ActionsForJaco == ActionBowl)
 			&& mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
 		{
 			eyesClosedCounter[iFace]++;
-			if (eyesClosedCounter[iFace] >= 20 || ActionsForJaco == ActionBowl)
+			if (eyesClosedCounter[iFace] >= 10 || ActionsForJaco == ActionBowl)
 			{
 				eyesClosedCounter[iFace] = 0;
 
@@ -828,7 +920,7 @@ void CFaceBasics::InterpretSpeechAndGestures(DetectionResult faceProperties[], C
 		if ((faceProperties[FaceProperty_MouthOpen] == DetectionResult_Yes || ActionsForJaco == ActionFood) && mouthPoints[iFace].Z <= mouthPoints[iFaceMin].Z)
 		{
 			mouthOpenCounter[iFace]++;
-			if (mouthOpenCounter[iFace] >= 30 || ActionsForJaco == ActionFood)
+			if (mouthOpenCounter[iFace] >= 10 || ActionsForJaco == ActionFood)
 			{
 				mouthOpenCounter[iFace] = 0;
 				armState = ArmMovingTowardMouth;
@@ -874,4 +966,36 @@ void CFaceBasics::InterpretSpeechAndGestures(DetectionResult faceProperties[], C
 	LPCWSTR l = ws.c_str();
 	//OutputDebugString(l);
 #endif
+}
+
+
+HRESULT CFaceBasics::MapColorToCameraCoordinates(const ColorSpacePoint& colorsps, CameraSpacePoint& camerasps)
+{
+	UINT16* depthImageBuffer = nullptr;
+	//Access frame
+
+	HRESULT hr = 1;
+
+	if (SUCCEEDED(hr))
+	{
+		if (pDepthBuffer &&  cameraSpacePoints && (nDepthWidth == cDepthWidth) && (nDepthHeight == cDepthHeight))
+		{	
+			hr = m_pCoordinateMapper->MapColorFrameToCameraSpace((nDepthWidth * nDepthHeight), (const UINT16*)pDepthBuffer, (cColorWidth * cColorHeight), cameraSpacePoints);
+			if (SUCCEEDED(hr))
+			{
+				int colorX = static_cast<int>(colorsps.X + 0.5f);
+				int colorY = static_cast<int>(colorsps.Y + 0.5f);
+				long colorIndex = (long)(colorY * cColorWidth + colorX);
+				CameraSpacePoint csp = cameraSpacePoints[colorIndex];
+				camerasps = CameraSpacePoint{ csp.X, csp.Y, csp.Z };
+			}
+			//delete[] cameraSpacePoints;
+		}
+		else
+		{
+			hr = E_FAIL;
+		}
+		
+	}
+	return hr;
 }

@@ -130,16 +130,16 @@ int JacoArm::MoveToNeutralPosition()
 	MyGetCartesianCommand(currentCommand);
 
 	float neutral_x, neutral_y, neutral_z;
-	float y_offset_bowl = .5;
+	float y_offset_bowl = .3;
 
-	KinectToArm(bowl_xpos, (bowl_ypos + y_offset_bowl), bowl_zpos, &neutral_x, &neutral_y, &neutral_z);
+	KinectToArm(bowl_xpos+ BOWL_OFFSET_X, (bowl_ypos + BOWL_OFFSET_Y +  y_offset_bowl), bowl_zpos + BOWL_OFFSET_Z, &neutral_x, &neutral_y, &neutral_z);
 
 	pointToSend.Position.CartesianPosition.X = neutral_x;
 	pointToSend.Position.CartesianPosition.Y = neutral_y;
 	pointToSend.Position.CartesianPosition.Z = neutral_z;
-	pointToSend.Position.CartesianPosition.ThetaX = 2.1797; // was 1.8796
-	pointToSend.Position.CartesianPosition.ThetaY = -0.5404; // was 0.4309
-	pointToSend.Position.CartesianPosition.ThetaZ = -1.1281; // was -1.5505
+	pointToSend.Position.CartesianPosition.ThetaX = 2.1797;//1.8796;
+	pointToSend.Position.CartesianPosition.ThetaY = -0.5404;//0.4309;
+	pointToSend.Position.CartesianPosition.ThetaZ = -1.1281;//-1.5505;
 	pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
 	pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
 	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
@@ -172,9 +172,9 @@ int JacoArm::MoveArm(float x, float y, float z)
 	pointToSend.Position.CartesianPosition.X = x;
 	pointToSend.Position.CartesianPosition.Y = y;
 	pointToSend.Position.CartesianPosition.Z = z;
-	pointToSend.Position.CartesianPosition.ThetaX =  2.1797;
-	pointToSend.Position.CartesianPosition.ThetaY = -.5404;
-	pointToSend.Position.CartesianPosition.ThetaZ = -1.1281;
+	pointToSend.Position.CartesianPosition.ThetaX = 2.1797;//1.8796;
+	pointToSend.Position.CartesianPosition.ThetaY = -0.5404;//0.4309;
+	pointToSend.Position.CartesianPosition.ThetaZ = -1.1281;//-1.5505;
 	pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
 	pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
 	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
@@ -268,7 +268,7 @@ int JacoArm::Soup()
 	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z;
 	rc = SendPoint(pointToSend);
 
-	pointToSend.Position.CartesianPosition.ThetaZ = -1.2264;
+	pointToSend.Position.CartesianPosition.ThetaZ = currentCommand.Coordinates.ThetaZ + .25;
 	rc = SendPoint(pointToSend);
 
 	pointToSend.Position.CartesianPosition.ThetaZ = currentCommand.Coordinates.ThetaZ;

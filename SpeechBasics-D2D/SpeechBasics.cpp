@@ -157,11 +157,6 @@ HRESULT CSpeechBasics::StartKinect()
 
     if (SUCCEEDED(hr))
     {
-        hr = m_pKinectSensor->Open();
-    }
-
-    if (SUCCEEDED(hr))
-    {
         hr = m_pKinectSensor->get_AudioSource(&pAudioSource);
     }
 

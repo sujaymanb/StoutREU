@@ -75,18 +75,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		OutputDebugString(L"Failed getting default sensor!");
 		return hr;
 	}
-	m_pKinectSensor->Open();
+	hr = m_pKinectSensor->Open();
+	if(SUCCEEDED(hr))
+	{ 
+		ArTracker tracker;
+		tracker.GetARPosition(armVec, bowlVec);
+		JacoArm arm(armVec);
 
-	
-	ArTracker tracker;
-	tracker.GetARPosition(armVec, bowlVec);
-	JacoArm arm(armVec);
+		thread th1(SpeechRecognizerThread, hInstance, nCmdShow);
+		thread th2(FaceBasicsThread, hInstance, nCmdShow, arm);
 
-	thread th1(SpeechRecognizerThread, hInstance, nCmdShow);
-	thread th2(FaceBasicsThread, hInstance, nCmdShow, arm);
-
-	th1.join();
-	th2.join();
-	
+		th1.join();
+		th2.join();
+	}
 	return 0;
 }	
