@@ -195,24 +195,24 @@ int JacoArm::Scoop()
 	// dip down and back up for now
 	pointToSend.Position.CartesianPosition.X = currentCommand.Coordinates.X;
 	pointToSend.Position.CartesianPosition.Y = currentCommand.Coordinates.Y;
-	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z - 0.05f;
-	pointToSend.Position.CartesianPosition.ThetaX = 2.4858;
-	pointToSend.Position.CartesianPosition.ThetaY = 0.3713;
-	pointToSend.Position.CartesianPosition.ThetaZ = -1.5505;
+	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z - .03f;
+	pointToSend.Position.CartesianPosition.ThetaX = 2.4540;
+	pointToSend.Position.CartesianPosition.ThetaY = -0.3986;
+	pointToSend.Position.CartesianPosition.ThetaZ = -1.4348;
 	pointToSend.Position.Fingers.Finger1 = currentCommand.Fingers.Finger1;
 	pointToSend.Position.Fingers.Finger2 = currentCommand.Fingers.Finger2;
 	pointToSend.Position.Fingers.Finger3 = currentCommand.Fingers.Finger3;
 	SendPoint(pointToSend);
 
 	// scrape
-	pointToSend.Position.CartesianPosition.Y = currentCommand.Coordinates.Y - 0.06f;
+	pointToSend.Position.CartesianPosition.Y = currentCommand.Coordinates.Y - .07f;
 	int rc = SendPoint(pointToSend);
 
 	// back up
 	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z;
-	pointToSend.Position.CartesianPosition.ThetaX = 1.8796;
-	pointToSend.Position.CartesianPosition.ThetaY = 0.4309;
-	pointToSend.Position.CartesianPosition.ThetaZ = -1.5505;
+	pointToSend.Position.CartesianPosition.ThetaX = 2.4540;
+	pointToSend.Position.CartesianPosition.ThetaY = -0.3986;
+	pointToSend.Position.CartesianPosition.ThetaZ = -1.4348;
 	rc = SendPoint(pointToSend);
 	MyEraseAllTrajectories();
 

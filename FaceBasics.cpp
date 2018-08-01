@@ -542,7 +542,7 @@ void CFaceBasics::Update(JacoArm& arm)
 	}
 	
 	SafeRelease(pDepthFrame);
-    SafeRelease(pColorFrame);
+    SafeRelease(pColorFrame); 
 	SafeRelease(pBodyIndexFrame);
 	SafeRelease(pMultiSourceFrame);
 }
