@@ -850,9 +850,9 @@ void CFaceBasics::InterpretSpeechAndGestures(DetectionResult faceProperties[], C
 	}
 
 	// mode switches
-	if (ActionsForJaco == ActionScoop)
+	if (ActionsForJaco == ActionRice)
 	{
-		mode = ScoopMode;
+		mode = RiceMode;
 	}
 	else if (ActionsForJaco == ActionSoup)
 	{
@@ -900,7 +900,7 @@ void CFaceBasics::InterpretSpeechAndGestures(DetectionResult faceProperties[], C
 
 		// pick up food
 #if TESTING
-		if (mode == ScoopMode)
+		if (mode == RiceMode)
 		{
 			arm.Scoop();
 			OutputDebugString(L"\nIn Scoop Mode\n");

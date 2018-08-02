@@ -26,7 +26,7 @@
 enum EatingMode
 {
 	SoupMode,
-	ScoopMode,
+	RiceMode,
 	DrinkMode
 };
 

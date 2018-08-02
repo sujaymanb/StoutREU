@@ -390,8 +390,8 @@ void CSpeechBasics::ProcessSpeech()
 							case ActionBowl:
 								OutputDebugString(L"Bowl\n");
 								break;
-							case ActionScoop:
-								OutputDebugString(L"Scoop\n");
+							case ActionRice:
+								OutputDebugString(L"Rice\n");
 								break;
 							case ActionSoup:
 								OutputDebugString(L"Soup\n");
@@ -438,7 +438,7 @@ Action CSpeechBasics::MapSpeechTagToAction(LPCWSTR pszSpeechTag)
         {L"FOOD", ActionFood},
         {L"BOWL", ActionBowl},
 		{L"SOUP", ActionSoup},
-		{L"SCOOP", ActionScoop},
+		{L"RICE", ActionRice},
 		{L"STOP", ActionStop},
 		{L"RESET", ActionReset}
     };

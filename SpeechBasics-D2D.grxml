@@ -24,10 +24,10 @@
         </one-of>
       </item>
       <item>
-        <tag>SCOOP</tag>
+        <tag>RICE</tag>
         <one-of>
-          <item> scoop </item>
-	  <item> scoops </item>
+          <item> rice </item>
+	  <item> rices </item>
         </one-of>
       </item>
       <item>

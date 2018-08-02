@@ -30,7 +30,7 @@ enum Action
 	ActionFood,
 	ActionBowl,
 	ActionSoup,
-	ActionScoop,
+	ActionRice,
 	ActionStop,
 	ActionReset,
 	ActionNone

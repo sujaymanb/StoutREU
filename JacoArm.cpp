@@ -195,7 +195,7 @@ int JacoArm::Scoop()
 	// dip down and back up for now
 	pointToSend.Position.CartesianPosition.X = currentCommand.Coordinates.X;
 	pointToSend.Position.CartesianPosition.Y = currentCommand.Coordinates.Y;
-	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z - .03f;
+	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z - .04f;
 	pointToSend.Position.CartesianPosition.ThetaX = 2.4540;
 	pointToSend.Position.CartesianPosition.ThetaY = -0.3986;
 	pointToSend.Position.CartesianPosition.ThetaZ = -1.4348;
@@ -238,7 +238,7 @@ int JacoArm::Soup()
 
 	pointToSend.Position.CartesianPosition.X = currentCommand.Coordinates.X;
 	pointToSend.Position.CartesianPosition.Y = currentCommand.Coordinates.Y;
-	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z - 0.08f;
+	pointToSend.Position.CartesianPosition.Z = currentCommand.Coordinates.Z - 0.06f;
 	pointToSend.Position.CartesianPosition.ThetaX = currentCommand.Coordinates.ThetaX;
 	pointToSend.Position.CartesianPosition.ThetaY = currentCommand.Coordinates.ThetaY;
 	pointToSend.Position.CartesianPosition.ThetaZ = currentCommand.Coordinates.ThetaZ;
