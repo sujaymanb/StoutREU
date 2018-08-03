@@ -896,6 +896,8 @@ void CFaceBasics::InterpretSpeechAndGestures(DetectionResult faceProperties[], C
 		// go to plate, position hard coded for now
 		arm.UpdateArPositions();
 		arm.KinectToArm(arm.bowl_xpos + BOWL_OFFSET_X, arm.bowl_ypos + BOWL_OFFSET_Y, arm.bowl_zpos + BOWL_OFFSET_Z, &x, &y, &z);
+		arm.MoveToNeutralPosition();
+		arm.AboveBowlPosition();
 		arm.MoveArm(x, y, z);
 
 		// pick up food
@@ -910,8 +912,8 @@ void CFaceBasics::InterpretSpeechAndGestures(DetectionResult faceProperties[], C
 			arm.Soup();
 			OutputDebugString(L"\nIn Soup Mode\n");
 		}
-#endif	
-		arm.MoveToNeutralPosition();
+#endif
+		arm.AboveBowlPosition();
 		armState = WaitForMouthOpen;
 	}
 	else if (armState == WaitForMouthOpen)
@@ -947,8 +949,9 @@ void CFaceBasics::InterpretSpeechAndGestures(DetectionResult faceProperties[], C
 		arm.KinectToArm(mouthPoints[iFace].X, mouthPoints[iFace].Y, mouthPoints[iFace].Z, &x, &y, &z);
 		//armResult = MoveArm(0.3248, 0.45, 0.1672);
 
+		arm.MoveToNeutralPosition();
 		armResult = arm.MoveArm(x, y, z);
-
+		
 		armState = WaitForEyesClosed;
 	}
 	else // if(armState == StopAllMovement

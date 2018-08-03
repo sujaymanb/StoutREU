@@ -5,7 +5,7 @@
         <tag>FOOD</tag>
         <one-of>
           <item> food </item>
-          <item> foods </item>
+	  <item> foods </item>
         </one-of>
       </item>
       <item>

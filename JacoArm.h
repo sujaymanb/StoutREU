@@ -35,6 +35,11 @@ public:
 	int MoveToNeutralPosition();
 
 	/// <summary>
+	/// move to the designated above bowl position
+	/// </summary>
+	int AboveBowlPosition();
+
+	/// <summary>
 	/// Pick up food in scoop style
 	/// </summary>
 	int Scoop();
